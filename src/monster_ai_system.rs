@@ -18,7 +18,7 @@ impl<'a> System<'a> for MonsterAI {
 
         for (mut viewshed,_monster,name,mut pos) in (&mut viewshed, &monster, &name, &mut position).join() {
 			let distance = rltk::DistanceAlg::Pythagoras.distance2d(Point::new(pos.x, pos.y), *player_pos);
-			if (distance < 1.5) {
+			if distance < 1.5 {
 				console::log(&format!("{} shouts insults", name.name));
 			}
 					

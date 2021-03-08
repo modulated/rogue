@@ -15,6 +15,10 @@ mod monster_ai_system;
 use monster_ai_system::MonsterAI;
 mod map_indexing_system;
 use map_indexing_system::MapIndexingSystem;
+mod damage_system;
+use damage_system::DamageSystem;
+mod melee_combat_system;
+use melee_combat_system::MeleeCombatSystem;
 
 
 pub struct State {
@@ -39,6 +43,8 @@ impl GameState for State {
 			}
 		}
 
+		damage_system::delete_the_dead(&mut self.ecs);
+
 		draw_map(&self.ecs, ctx);
 
 		let positions = self.ecs.read_storage::<Position>();
@@ -60,9 +66,27 @@ impl State {
 		mob.run_now(&self.ecs);
 		let mut mapindex = MapIndexingSystem {};
 		mapindex.run_now(&self.ecs);
+		let mut combat = MeleeCombatSystem {};
+		combat.run_now(&self.ecs);
+		let mut damage = DamageSystem {};
+		damage.run_now(&self.ecs);
 
 		self.ecs.maintain();
+		
 	}
+}
+
+fn register_components(gs: &mut State) {
+	gs.ecs.register::<Position>();
+	gs.ecs.register::<Renderable>();
+	gs.ecs.register::<Player>();
+	gs.ecs.register::<Viewshed>();
+	gs.ecs.register::<Monster>();
+	gs.ecs.register::<Name>();
+	gs.ecs.register::<BlocksTile>();
+	gs.ecs.register::<CombatStats>();
+	gs.ecs.register::<WantsToMelee>();
+	gs.ecs.register::<SufferDamage>();
 }
 
 fn main() -> rltk::BError {
@@ -76,13 +100,8 @@ fn main() -> rltk::BError {
 		ecs: World::new(),
 		runstate: RunState::Running
 	};
-	gs.ecs.register::<Position>();
-	gs.ecs.register::<Renderable>();
-	gs.ecs.register::<Player>();
-	gs.ecs.register::<Viewshed>();
-	gs.ecs.register::<Monster>();
-	gs.ecs.register::<Name>();
-	gs.ecs.register::<BlocksTile>();
+	
+	register_components(&mut gs);
 
 	let map: Map = Map::new_map_rooms_and_corridors();
 	let (player_x, player_y) = map.rooms[0].center();
@@ -109,6 +128,7 @@ fn main() -> rltk::BError {
 			.with(Monster{})
 			.with(Name {name: format!{"{} #{}", &name, i+1}})
 			.with(BlocksTile{})
+			.with(CombatStats { max_hp: 16, hp: 16, defense: 1, power: 4})
 			.build();
 	}
 
@@ -125,6 +145,7 @@ fn main() -> rltk::BError {
 		.with(Viewshed{ visible_tiles: Vec::new(), range: 8, dirty: true})
 		.with(Name{ name: "Player".to_string()})
 		.with(BlocksTile{})
+		.with(CombatStats { max_hp: 30, hp: 30, defense: 2, power: 5})
 		.build();
 
 	gs.ecs.insert(Point::new(player_x, player_y));
