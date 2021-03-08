@@ -146,10 +146,17 @@ impl BaseMap for Map {
 		let (x, y) = self.idx_xy(idx);
 		let w = self.width as usize;
 
+		// Cardinals
 		if self.is_exit_valid(x-1, y) { exits.push((idx-1, 1.0)); }
 		if self.is_exit_valid(x+1, y) { exits.push((idx+1, 1.0)); }
 		if self.is_exit_valid(x, y-1) { exits.push((idx-w, 1.0)); }
 		if self.is_exit_valid(x, y+1) { exits.push((idx+w, 1.0)); }
+
+		// Diagonals
+		if self.is_exit_valid(x-1, y-1) { exits.push(((idx-w)-1, 1.0)); }
+		if self.is_exit_valid(x+1, y-1) { exits.push(((idx-w)+1, 1.0)); }
+		if self.is_exit_valid(x-1, y+1) { exits.push(((idx+w)-1, 1.0)); }
+		if self.is_exit_valid(x+1, y+1) { exits.push(((idx+w)+1, 1.0)); }
 
 		exits
 	}

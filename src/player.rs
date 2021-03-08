@@ -28,6 +28,7 @@ pub fn player_input(gs: &mut State, ctx: &mut Rltk) -> RunState {
 	match ctx.key {
 		None => { return RunState::Paused; } // Nothing happened
 		Some(key) => match key {
+			//Cardinals
 			VirtualKeyCode::Left |
 			VirtualKeyCode::Numpad4 |
 			VirtualKeyCode::H => try_move_player(-1, 0, &mut gs.ecs),
@@ -43,6 +44,21 @@ pub fn player_input(gs: &mut State, ctx: &mut Rltk) -> RunState {
 			VirtualKeyCode::Down |
 			VirtualKeyCode::Numpad2 |
 			VirtualKeyCode::J => try_move_player(0, 1, &mut gs.ecs),
+			
+			// Diagonals
+			VirtualKeyCode::Numpad9 |
+			VirtualKeyCode::Y => try_move_player(1, -1, &mut gs.ecs),
+
+			VirtualKeyCode::Numpad7 |
+			VirtualKeyCode::U => try_move_player(-1, -1, &mut gs.ecs),
+
+			VirtualKeyCode::Numpad3 |
+			VirtualKeyCode::N => try_move_player(1, 1, &mut gs.ecs),
+
+			VirtualKeyCode::Numpad1 |
+			VirtualKeyCode::B => try_move_player(-1, 1, &mut gs.ecs),
+
+			// Fall through
 			_ => { return RunState::Paused; }
 		},
 	}
