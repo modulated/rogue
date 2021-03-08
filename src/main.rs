@@ -41,11 +41,10 @@ impl GameState for State {
 			_ => {
 				self.runstate = player_input(self, ctx);
 			}
-		}
-
-		damage_system::delete_the_dead(&mut self.ecs);
+		}		
 
 		draw_map(&self.ecs, ctx);
+		damage_system::delete_the_dead(&mut self.ecs);
 
 		let positions = self.ecs.read_storage::<Position>();
 		let renderables = self.ecs.read_storage::<Renderable>();
@@ -134,7 +133,8 @@ fn main() -> rltk::BError {
 
 	gs.ecs.insert(map);
 
-	gs.ecs.create_entity()
+	let player_entity = gs.ecs
+		.create_entity()
 		.with(Position { x: player_x, y: player_y })
 		.with(Renderable {
 			glyph: rltk::to_cp437('@'),
@@ -149,6 +149,7 @@ fn main() -> rltk::BError {
 		.build();
 
 	gs.ecs.insert(Point::new(player_x, player_y));
+	gs.ecs.insert(player_entity);
 
 
 	rltk::main_loop(context, gs)
