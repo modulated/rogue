@@ -9,11 +9,11 @@ use player::*;
 mod rect;
 pub use rect::Rect;
 mod gui;
-pub use gui::draw_ui;
+pub use gui::{draw_ui, show_inventory, drop_item_menu, ItemMenuResult};
 mod gamelog;
 pub use gamelog::GameLog;
 mod spawner;
-pub use spawner::{player, random_monster};
+pub use spawner::*;
 
 // Systems
 mod visibility_system;
@@ -26,11 +26,13 @@ mod melee_combat_system;
 use melee_combat_system::MeleeCombatSystem;
 mod damage_system;
 use damage_system::DamageSystem;
+mod inventory_system;
+pub use inventory_system::{InventorySystem, PotionUseSystem, ItemDropSystem};
 
 
 
 #[derive(PartialEq, Copy, Clone)]
-pub enum RunState { AwaitingInput, PreRun, PlayerTurn, MonsterTurn }
+pub enum RunState { AwaitingInput, PreRun, PlayerTurn, MonsterTurn, ShowInventory, ShowDropItem }
 
 pub struct State {
 	pub ecs: World
@@ -48,6 +50,13 @@ impl State {
 		melee.run_now(&self.ecs);
 		let mut damage = DamageSystem{};
 		damage.run_now(&self.ecs);
+		let mut inventory = InventorySystem{};
+		inventory.run_now(&self.ecs);
+		let mut potion = PotionUseSystem{};
+		potion.run_now(&self.ecs);
+		let mut drop_items = ItemDropSystem{};
+		drop_items.run_now(&self.ecs);
+		
 		self.ecs.maintain();
 	}
 }
@@ -64,6 +73,7 @@ impl GameState for State {
 		match newrunstate {
 			RunState::PreRun => {
 				self.run_systems();
+				self.ecs.maintain();
 				newrunstate = RunState::AwaitingInput;
 			}
 			RunState::AwaitingInput => {
@@ -71,11 +81,40 @@ impl GameState for State {
 			}
 			RunState::PlayerTurn => {
 				self.run_systems();
+				self.ecs.maintain();
 				newrunstate = RunState::MonsterTurn;
 			}
 			RunState::MonsterTurn => {
 				self.run_systems();
+				self.ecs.maintain();
 				newrunstate = RunState::AwaitingInput;
+			}
+			RunState::ShowInventory => {
+				let result = show_inventory(self, ctx);
+				match result.0 {
+					ItemMenuResult::Cancel => newrunstate = RunState::AwaitingInput,
+					ItemMenuResult::NoResponse => {}
+					ItemMenuResult::Selected => {
+						let item_entity = result.1.unwrap();
+						let mut intent = self.ecs.write_storage::<WantsToDrinkPotion>();
+						intent.insert(*self.ecs.fetch::<Entity>(), WantsToDrinkPotion {potion: item_entity}).expect("Unable to insert intent to drink potion.");
+						newrunstate = RunState::PlayerTurn;
+					}
+
+				}
+			}
+			RunState::ShowDropItem => {
+				let result = drop_item_menu(self, ctx);
+				match result.0 {
+					ItemMenuResult::Cancel => newrunstate = RunState::AwaitingInput,
+					ItemMenuResult::NoResponse => {}
+					ItemMenuResult::Selected => {
+						let item_entity = result.1.unwrap();
+						let mut intent = self.ecs.write_storage::<WantsToDropItem>();
+						intent.insert(*self.ecs.fetch::<Entity>(), WantsToDropItem{ item:item_entity}).expect("Unable to drop item");
+						newrunstate = RunState::PlayerTurn;
+					}
+				}
 			}
 		}
 
@@ -90,8 +129,11 @@ impl GameState for State {
 		let positions = self.ecs.read_storage::<Position>();
 		let renderables = self.ecs.read_storage::<Renderable>();
 		let map = self.ecs.fetch::<Map>();
+		
+		let mut data = (&positions, &renderables).join().collect::<Vec<_>>();
+		data.sort_by(|&a, &b| b.1.render_order.cmp(&a.1.render_order));
 
-		for (pos, render) in (&positions, &renderables).join() {
+		for (pos, render) in data.iter() {
 			let idx = map.xy_idx(pos.x, pos.y);
 			if map.visible_tiles[idx] { ctx.set(pos.x, pos.y, render.fg, render.bg, render.glyph) }
 		}
@@ -111,26 +153,17 @@ fn main() -> rltk::BError {
 	let mut gs = State {
 		ecs: World::new(),
 	};
-	gs.ecs.register::<Position>();
-	gs.ecs.register::<Renderable>();
-	gs.ecs.register::<Player>();
-	gs.ecs.register::<Viewshed>();
-	gs.ecs.register::<Monster>();
-	gs.ecs.register::<Name>();
-	gs.ecs.register::<BlocksTile>();
-	gs.ecs.register::<CombatStats>();
-	gs.ecs.register::<WantsToMelee>();
-	gs.ecs.register::<SufferDamage>();
+
+	components::register(&mut gs.ecs);
 
 	let map : Map = Map::new_map_rooms_and_corridors();
 	let (player_x, player_y) = map.rooms[0].center();
 
 	let player_entity = spawner::player(&mut gs.ecs, player_x, player_y);
 
-	gs.ecs.insert(rltk::RandomNumberGenerator::seeded(1));
-	for room in map.rooms.iter().skip(1) {
-		let (x,y) = room.center();
-		spawner::random_monster(&mut gs.ecs, x, y);
+	gs.ecs.insert(rltk::RandomNumberGenerator::new());
+	for room in map.rooms.iter().skip(1) {		
+		spawner::spawn_room(&mut gs.ecs, room);
 	}
 
 	gs.ecs.insert(map);

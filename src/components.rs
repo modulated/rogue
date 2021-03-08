@@ -2,6 +2,26 @@ use specs::prelude::*;
 use specs_derive::*;
 use rltk::{RGB};
 
+pub fn register(ecs: &mut World) {
+    ecs.register::<Position>();
+	ecs.register::<Renderable>();
+	ecs.register::<Player>();
+	ecs.register::<Viewshed>();
+	ecs.register::<Monster>();
+	ecs.register::<Name>();
+	ecs.register::<BlocksTile>();
+	ecs.register::<CombatStats>();
+	ecs.register::<WantsToMelee>();
+	ecs.register::<SufferDamage>();
+	ecs.register::<Item>();
+	ecs.register::<Potion>();
+	ecs.register::<WantsToPickupItem>();
+	ecs.register::<InBackpack>();
+    ecs.register::<WantsToDrinkPotion>();
+    ecs.register::<WantsToDropItem>();
+    ecs.register::<Consumable>();
+}
+
 #[derive(Component)]
 pub struct Position {
     pub x: i32,
@@ -13,6 +33,7 @@ pub struct Renderable {
     pub glyph: rltk::FontCharType,
     pub fg: RGB,
     pub bg: RGB,
+    pub render_order: i32
 }
 
 #[derive(Component, Debug)]
@@ -64,3 +85,35 @@ impl SufferDamage {
         }
     }
 }
+
+#[derive(Component, Debug)]
+pub struct Item {}
+
+#[derive(Component, Debug)]
+pub struct Potion {
+    pub heal_amount: i32
+}
+
+#[derive(Component, Debug, Clone)]
+pub struct InBackpack {
+    pub owner: Entity
+}
+
+#[derive(Component)]
+pub struct WantsToPickupItem {
+    pub collected_by: Entity,
+    pub item: Entity
+}
+
+#[derive(Component)]
+pub struct WantsToDrinkPotion {
+    pub potion: Entity
+}
+
+#[derive(Component)]
+pub struct WantsToDropItem {
+    pub item: Entity
+}
+
+#[derive(Component, Debug)]
+pub struct Consumable {}
