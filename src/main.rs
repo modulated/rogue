@@ -10,6 +10,10 @@ mod rect;
 pub use rect::Rect;
 mod gui;
 pub use gui::draw_ui;
+mod gamelog;
+pub use gamelog::GameLog;
+
+// Systems
 mod visibility_system;
 use visibility_system::VisibilitySystem;
 mod monster_ai_system;
@@ -163,6 +167,7 @@ fn main() -> rltk::BError {
 	gs.ecs.insert(Point::new(player_x, player_y));
 	gs.ecs.insert(player_entity);
 	gs.ecs.insert(RunState::PreRun);
+	gs.ecs.insert(gamelog::GameLog{ entries: vec!["Welcome to Rogue.".to_string()]});
 
 	rltk::main_loop(context, gs)
 }
