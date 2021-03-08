@@ -100,11 +100,12 @@ impl GameState for State {
 
 fn main() -> rltk::BError {
 	use rltk::RltkBuilder;
-	let context = RltkBuilder::simple80x50()
+	let mut context = RltkBuilder::simple80x50()
 		.with_title("Rogue")
 		.with_fps_cap(24.0)
-		.with_dimensions(160, 100)
+		.with_dimensions(160, 100)		
 		.build()?;
+	context.with_post_scanlines(true);
 	let mut gs = State {
 		ecs: World::new(),
 	};
