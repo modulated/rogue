@@ -9,7 +9,7 @@ use player::*;
 mod rect;
 pub use rect::Rect;
 mod gui;
-pub use gui::{draw_ui, show_inventory, drop_item_menu, ItemMenuResult};
+pub use gui::{draw_ui, show_inventory, drop_item_menu, ranged_target, ItemMenuResult};
 mod gamelog;
 pub use gamelog::GameLog;
 mod spawner;
@@ -32,7 +32,7 @@ pub use inventory_system::{InventorySystem, ItemUseSystem, ItemDropSystem};
 
 
 #[derive(PartialEq, Copy, Clone)]
-pub enum RunState { AwaitingInput, PreRun, PlayerTurn, MonsterTurn, ShowInventory, ShowDropItem }
+pub enum RunState { AwaitingInput, PreRun, PlayerTurn, MonsterTurn, ShowInventory, ShowDropItem, ShowTargeting { range: i32, item: Entity } }
 
 pub struct State {
 	pub ecs: World
@@ -64,6 +64,25 @@ impl State {
 impl GameState for State {
 	fn tick(&mut self, ctx : &mut Rltk) {
 		ctx.cls();
+
+		draw_map(&self.ecs, ctx);
+
+		{
+			let positions = self.ecs.read_storage::<Position>();
+			let renderables = self.ecs.read_storage::<Renderable>();
+			let map = self.ecs.fetch::<Map>();
+			
+			let mut data = (&positions, &renderables).join().collect::<Vec<_>>();
+			data.sort_by(|&a, &b| b.1.render_order.cmp(&a.1.render_order));
+	
+			for (pos, render) in data.iter() {
+				let idx = map.xy_idx(pos.x, pos.y);
+				if map.visible_tiles[idx] { ctx.set(pos.x, pos.y, render.fg, render.bg, render.glyph) }
+			}
+	
+			draw_ui(&self.ecs, ctx);
+		}
+
 		let mut newrunstate;
 		{
 			let runstate = self.ecs.fetch::<RunState>();
@@ -96,9 +115,15 @@ impl GameState for State {
 					ItemMenuResult::NoResponse => {}
 					ItemMenuResult::Selected => {
 						let item_entity = result.1.unwrap();
-						let mut intent = self.ecs.write_storage::<WantsToUseItem>();
-						intent.insert(*self.ecs.fetch::<Entity>(), WantsToUseItem {item: item_entity}).expect("Unable to insert intent to use item.");
-						newrunstate = RunState::PlayerTurn;
+						let is_ranged = self.ecs.read_storage::<Ranged>();
+						let is_item_ranged = is_ranged.get(item_entity);
+						if let Some(is_item_ranged) = is_item_ranged {
+							newrunstate = RunState::ShowTargeting{ range: is_item_ranged.range, item: item_entity };
+						} else {
+							let mut intent = self.ecs.write_storage::<WantsToUseItem>();
+							intent.insert(*self.ecs.fetch::<Entity>(), WantsToUseItem {item: item_entity, target: None}).expect("Unable to insert intent to use item.");
+							newrunstate = RunState::PlayerTurn;
+						}
 					}
 
 				}
@@ -116,6 +141,19 @@ impl GameState for State {
 					}
 				}
 			}
+
+			RunState::ShowTargeting{range,item} => {
+				let result = ranged_target(self, ctx, range);
+				match result.0 {
+					ItemMenuResult::Cancel => newrunstate = RunState::AwaitingInput,
+					ItemMenuResult::NoResponse => {}
+					ItemMenuResult::Selected => {
+						let mut intent = self.ecs.write_storage::<WantsToUseItem>();
+						intent.insert(*self.ecs.fetch::<Entity>(), WantsToUseItem{ item, target: result.1}).expect("Unable to insert target intent.");
+						newrunstate = RunState::PlayerTurn;
+					}
+				}				
+			}
 		}
 
 		{
@@ -123,22 +161,6 @@ impl GameState for State {
 			*runwriter = newrunstate;
 		}
 		damage_system::delete_the_dead(&mut self.ecs);
-
-		draw_map(&self.ecs, ctx);
-
-		let positions = self.ecs.read_storage::<Position>();
-		let renderables = self.ecs.read_storage::<Renderable>();
-		let map = self.ecs.fetch::<Map>();
-		
-		let mut data = (&positions, &renderables).join().collect::<Vec<_>>();
-		data.sort_by(|&a, &b| b.1.render_order.cmp(&a.1.render_order));
-
-		for (pos, render) in data.iter() {
-			let idx = map.xy_idx(pos.x, pos.y);
-			if map.visible_tiles[idx] { ctx.set(pos.x, pos.y, render.fg, render.bg, render.glyph) }
-		}
-
-		draw_ui(&self.ecs, ctx);
 	}
 }
 

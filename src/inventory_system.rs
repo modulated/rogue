@@ -1,5 +1,5 @@
 use specs::prelude::*;
-use super::{WantsToPickupItem, Name, InBackpack, Position, GameLog, CombatStats, WantsToUseItem, Consumable, WantsToDropItem, ProvidesHealing};
+use super::{WantsToPickupItem, Name, InBackpack, Map, Position, GameLog, CombatStats, SufferDamage, WantsToUseItem, Consumable, WantsToDropItem, ProvidesHealing, InflictsDamage};
 
 pub struct InventorySystem {}
 
@@ -36,16 +36,19 @@ impl<'a> System<'a> for ItemUseSystem {
 	type SystemData = (
 		ReadExpect<'a, Entity>,
 		WriteExpect<'a, GameLog>,
+		ReadExpect<'a, Map>,
 		Entities<'a>,
 		WriteStorage<'a, WantsToUseItem>,
 		ReadStorage<'a, Name>,
+		ReadStorage<'a, InflictsDamage>,
 		ReadStorage<'a, Consumable>,
 		WriteStorage<'a, CombatStats>,
-		ReadStorage<'a, ProvidesHealing>
+		ReadStorage<'a, ProvidesHealing>, 
+		WriteStorage<'a, SufferDamage>
 	);
 
 	fn run(&mut self, data: Self::SystemData) {
-		let (player_entity, mut gamelog, entities, mut wants_use, names, consumables, mut combat_stats, healing) = data;
+		let (player_entity, mut gamelog, map, entities, mut wants_use, names, inflicts_damage, consumables, mut combat_stats, healing, mut suffer_damage) = data;
 
 		for (entity, useitem) in (&entities, &wants_use).join() {
 			let mut used_item = true;
@@ -67,6 +70,27 @@ impl<'a> System<'a> for ItemUseSystem {
 						used_item = true;
 					}
 					
+				}
+			}
+
+			// If inflicts damage, apply to target cell
+			let item_damages = inflicts_damage.get(useitem.item);
+			match item_damages {
+				None => {}
+				Some(damage) => {
+					let target_point = useitem.target.unwrap();
+					let idx = map.xy_idx(target_point.x, target_point.y);
+					used_item = false;
+					for mob in map.tile_content[idx].iter() {
+						SufferDamage::new_damage(&mut suffer_damage, *mob, damage.damage);
+						if entity == *player_entity {
+							let mob_name = names.get(*mob).unwrap();
+							let item_name = names.get(useitem.item).unwrap();
+							gamelog.entries.push(format!("You use {} on {}, inflicting {} damage.", item_name.name, mob_name.name, damage.damage));
+						}
+
+						used_item = true;
+					}
 				}
 			}
 
