@@ -1,5 +1,5 @@
 use specs::prelude::*;
-use super::{WantsToPickupItem, Name, InBackpack, Position, GameLog, CombatStats, WantsToDrinkPotion, Consumable, WantsToDropItem};
+use super::{WantsToPickupItem, Name, InBackpack, Position, GameLog, CombatStats, WantsToUseItem, Consumable, WantsToDropItem, ProvidesHealing};
 
 pub struct InventorySystem {}
 
@@ -33,28 +33,54 @@ impl<'a> System<'a> for InventorySystem {
 pub struct ItemUseSystem {}
 
 impl<'a> System<'a> for ItemUseSystem {
-	type SystemData = ( ReadExpect<'a, Entity>,
+	type SystemData = (
+		ReadExpect<'a, Entity>,
 		WriteExpect<'a, GameLog>,
 		Entities<'a>,
-		WriteStorage<'a, WantsToDrinkPotion>,
+		WriteStorage<'a, WantsToUseItem>,
 		ReadStorage<'a, Name>,
 		ReadStorage<'a, Consumable>,
-		WriteStorage<'a, CombatStats>
+		WriteStorage<'a, CombatStats>,
+		ReadStorage<'a, ProvidesHealing>
 	);
 
 	fn run(&mut self, data: Self::SystemData) {
-		let (player_entity, mut gamelog, entities, mut wants_drink, names, consumables, mut combat_stats) = data;
+		let (player_entity, mut gamelog, entities, mut wants_use, names, consumables, mut combat_stats, healing) = data;
 
-		for (entity, drink, stats) in (&entities, &wants_drink, &mut combat_stats).join() {
+		for (entity, useitem) in (&entities, &wants_use).join() {
+			let mut used_item = true;
+
 			let consumable = consumables.get(useitem.item);
-			match consumable {
+			
+			// If heals, provide healing
+			let item_heals = healing.get(useitem.item);
+			match item_heals {
 				None => {}
-				Some(_) => {					
-					entities.delete(useitem.potion).expect("Delete item failed");
+				Some(healer) => {
+					used_item = false;
+					let stats = combat_stats.get_mut(*player_entity);
+					if let Some(stats) = stats {
+						stats.hp = i32::min(stats.max_hp, stats.hp + healer.heal_amount);
+						if entity == *player_entity {
+							gamelog.entries.push(format!("You drink the {}, healing {} health.", names.get(useitem.item).unwrap().name, healer.heal_amount));
+						}
+						used_item = true;
+					}
+					
+				}
+			}
+
+			if used_item {
+				let consumable = consumables.get(useitem.item);
+				match consumable {
+					None => {}
+					Some(_) => {
+						entities.delete(useitem.item).expect("Delete failed.");
+					}
 				}
 			}
 		}
-		wants_drink.clear();
+		wants_use.clear();
 	}
 }
 

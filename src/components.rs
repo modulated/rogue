@@ -17,9 +17,10 @@ pub fn register(ecs: &mut World) {
 	ecs.register::<Potion>();
 	ecs.register::<WantsToPickupItem>();
 	ecs.register::<InBackpack>();
-    ecs.register::<WantsToDrinkPotion>();
+    ecs.register::<WantsToUseItem>();
     ecs.register::<WantsToDropItem>();
     ecs.register::<Consumable>();
+    ecs.register::<ProvidesHealing>();
 }
 
 #[derive(Component)]
@@ -106,8 +107,8 @@ pub struct WantsToPickupItem {
 }
 
 #[derive(Component)]
-pub struct WantsToDrinkPotion {
-    pub potion: Entity
+pub struct WantsToUseItem {
+    pub item: Entity
 }
 
 #[derive(Component)]
@@ -117,3 +118,8 @@ pub struct WantsToDropItem {
 
 #[derive(Component, Debug)]
 pub struct Consumable {}
+
+#[derive(Component, Debug)]
+pub struct ProvidesHealing {
+    pub heal_amount: i32
+}

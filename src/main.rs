@@ -27,7 +27,7 @@ use melee_combat_system::MeleeCombatSystem;
 mod damage_system;
 use damage_system::DamageSystem;
 mod inventory_system;
-pub use inventory_system::{InventorySystem, PotionUseSystem, ItemDropSystem};
+pub use inventory_system::{InventorySystem, ItemUseSystem, ItemDropSystem};
 
 
 
@@ -52,8 +52,8 @@ impl State {
 		damage.run_now(&self.ecs);
 		let mut inventory = InventorySystem{};
 		inventory.run_now(&self.ecs);
-		let mut potion = PotionUseSystem{};
-		potion.run_now(&self.ecs);
+		let mut item = ItemUseSystem{};
+		item.run_now(&self.ecs);
 		let mut drop_items = ItemDropSystem{};
 		drop_items.run_now(&self.ecs);
 		
@@ -96,8 +96,8 @@ impl GameState for State {
 					ItemMenuResult::NoResponse => {}
 					ItemMenuResult::Selected => {
 						let item_entity = result.1.unwrap();
-						let mut intent = self.ecs.write_storage::<WantsToDrinkPotion>();
-						intent.insert(*self.ecs.fetch::<Entity>(), WantsToDrinkPotion {potion: item_entity}).expect("Unable to insert intent to drink potion.");
+						let mut intent = self.ecs.write_storage::<WantsToUseItem>();
+						intent.insert(*self.ecs.fetch::<Entity>(), WantsToUseItem {item: item_entity}).expect("Unable to insert intent to use item.");
 						newrunstate = RunState::PlayerTurn;
 					}
 
