@@ -1,5 +1,5 @@
 use specs::prelude::*;
-use super::{WantsToPickupItem, Name, InBackpack, Map, Position, GameLog, CombatStats, SufferDamage, WantsToUseItem, Consumable, WantsToDropItem, ProvidesHealing, InflictsDamage, AreaOfEffect, Confusion};
+use super::{WantsToPickupItem, Name, InBackpack, Map, Position, GameLog, CombatStats, SufferDamage, WantsToUseItem, Consumable, WantsToDropItem, ProvidesHealing, InflictsDamage, AreaOfEffect, Confusion, Equippable, Equipped};
 
 pub struct InventorySystem {}
 
@@ -47,10 +47,29 @@ impl<'a> System<'a> for ItemUseSystem {
 		WriteStorage<'a, SufferDamage>,
 		ReadStorage<'a, AreaOfEffect>,
 		WriteStorage<'a, Confusion>,
+		WriteStorage<'a, InBackpack>,
+		WriteStorage<'a, Equipped>,
+		ReadStorage<'a, Equippable>
 	);
 
 	fn run(&mut self, data: Self::SystemData) {
-		let (player_entity, mut gamelog, map, entities, mut wants_use, names, inflicts_damage, consumables, mut combat_stats, healing, mut suffer_damage, aoe, mut confused) = data;
+		let (player_entity, 
+			mut gamelog, 
+			map, 
+			entities, 
+			mut wants_use, 
+			names, 
+			inflicts_damage, 
+			consumables, 
+			mut combat_stats, 
+			healing, 
+			mut suffer_damage, 
+			aoe, 
+			mut confused, 
+			mut backpack, 
+			mut equipped,
+			equippable
+		) = data;
 
 		for (entity, useitem) in (&entities, &wants_use).join() {
 			let mut used_item = true;
@@ -85,6 +104,37 @@ impl<'a> System<'a> for ItemUseSystem {
 				}
 			}
 			
+			let item_equippable = equippable.get(useitem.item);
+			match item_equippable {
+				None => {}
+				Some(can_equip) => {
+					let target_slot = can_equip.slot;
+					let target = targets[0];
+
+					// Remove any item in targets relevant slot
+					let mut to_unequip: Vec<Entity> = Vec::new();
+					for (item_entity, already_equipped, name) in (&entities, &equipped, &names).join() {
+						if already_equipped.owner == target && already_equipped.slot == target_slot {
+							to_unequip.push(item_entity);
+							if target == *player_entity {
+								gamelog.entries.push(format!("You unequip the {}.", name.name));
+							}
+						}
+					}
+					for item in to_unequip.iter() {
+						equipped.remove(*item);
+						backpack.insert(*item, InBackpack{ owner: target }).expect("Unable to insert item into backpack.");
+					}
+
+					// Wield item
+					equipped.insert(useitem.item, Equipped{ owner: target, slot: target_slot }).expect("Unable to wield item.");
+					backpack.remove(useitem.item);
+					if target == *player_entity {
+						gamelog.entries.push(format!("You equip the {}.", names.get(useitem.item).unwrap().name));
+					}
+				}
+			}
+
 			// If heals, provide healing
 			let item_heals = healing.get(useitem.item);
 			match item_heals {
@@ -123,6 +173,7 @@ impl<'a> System<'a> for ItemUseSystem {
 				}
 			}
 
+			// If adds confusion, calculate
 			let mut add_confusion = Vec::new();
 			{
 				let causes_confusion = confused.get(useitem.item);

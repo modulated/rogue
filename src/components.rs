@@ -28,6 +28,8 @@ pub fn register(ecs: &mut World) {
 	ecs.register::<InflictsDamage>();
 	ecs.register::<AreaOfEffect>();
 	ecs.register::<Confusion>();
+	ecs.register::<Equippable>();
+	ecs.register::<Equipped>();
 	ecs.register::<SimpleMarker<SerializeMe>>();
 	ecs.register::<SerializationHelper>();
 }
@@ -152,6 +154,20 @@ pub struct AreaOfEffect {
 #[derive(Component, Debug, ConvertSaveload)]
 pub struct Confusion {
 	pub duration: i32
+}
+
+#[derive(PartialEq, Clone, Copy, Serialize, Deserialize)]
+pub enum EquipmentSlot { Melee, Shield }
+
+#[derive(Component, Serialize, Deserialize, Clone)]
+pub struct Equippable {
+	pub slot: EquipmentSlot
+}
+
+#[derive(Component, ConvertSaveload, Clone)]
+pub struct Equipped {
+	pub owner: Entity,
+	pub slot: EquipmentSlot
 }
 
 

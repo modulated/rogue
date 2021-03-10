@@ -2,6 +2,8 @@ use rltk::{ RGB, RandomNumberGenerator };
 use specs::{prelude::*, saveload::MarkedBuilder, saveload::SimpleMarker};
 use std::collections::HashMap;
 
+use crate::{EquipmentSlot, Equippable};
+
 use super::{CombatStats, Player, Renderable, Name, Position, Viewshed, Monster, BlocksTile, MAPWIDTH, Rect, Consumable, ProvidesHealing, Item, Ranged, InflictsDamage, AreaOfEffect, Confusion, SerializeMe, RandomTable};
 
 const MAX_ENTITIES: i32 = 4;
@@ -60,6 +62,8 @@ pub fn spawn_room(ecs: &mut World, room: &Rect, map_depth: i32) {
 			"Fireball Scroll" => fireball_scroll(ecs, x, y),
 			"Confusion Scroll" => confusion_scroll(ecs, x, y),
 			"Magic Missile Scroll" => magic_missile_scroll(ecs, x, y),
+			"Dagger" => dagger(ecs, x, y),
+			"Shield" => shield(ecs, x, y),
 			_ => {}
 		}
 	}
@@ -169,21 +173,23 @@ fn dagger(ecs: &mut World, x: i32, y: i32) {
 		})
 		.with(Name{ name : "Dagger".to_string() })
 		.with(Item{})		
+		.with(Equippable {slot: EquipmentSlot::Melee })
 		.marked::<SimpleMarker<SerializeMe>>()
 		.build();
 }
 
-fn dagger(ecs: &mut World, x: i32, y: i32) {
+fn shield(ecs: &mut World, x: i32, y: i32) {
 	ecs.create_entity()
 		.with(Position{ x, y })
 		.with(Renderable{
-			glyph: rltk::to_cp437('¶'),
+			glyph: rltk::to_cp437('◙'),
 			fg: RGB::named(rltk::CYAN),
 			bg: RGB::named(rltk::BLACK),
 			render_order: 2
 		})
-		.with(Name{ name : "Dagger".to_string() })
+		.with(Name{ name : "Shield".to_string() })
 		.with(Item{})		
+		.with(Equippable {slot: EquipmentSlot::Shield })
 		.marked::<SimpleMarker<SerializeMe>>()
 		.build();
 }
@@ -196,4 +202,6 @@ fn room_table(map_depth: i32) -> RandomTable {
 		.add("Fireball Scroll", 2 + map_depth)
 		.add("Confusion Scroll", 2 + map_depth)
 		.add("Magic Missile Scroll", 4)
+		.add("Dagger", 3)
+		.add("Shield", 3)
 }
