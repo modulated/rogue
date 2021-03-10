@@ -13,6 +13,9 @@ pub enum MainMenuSelection { NewGame, LoadGame, Quit }
 #[derive(PartialEq, Copy, Clone)]
 pub enum MainMenuResult { NoSeleciton { selected: MainMenuSelection }, Selected { selected: MainMenuSelection } }
 
+#[derive(PartialEq, Clone, Copy)]
+pub enum GameOverResult { NoSeleciton, QuitToMenu }
+
 pub fn show_inventory(gs: &mut State, ctx: &mut Rltk) -> (ItemMenuResult, Option<Entity>) {
 	let player_entity = gs.ecs.fetch::<Entity>();
 	let names = gs.ecs.read_storage::<Name>();
@@ -150,6 +153,19 @@ pub fn main_menu(gs : &mut State, ctx : &mut Rltk) -> MainMenuResult {
 	}
 
 	MainMenuResult::NoSeleciton { selected: MainMenuSelection::NewGame }
+}
+
+pub fn game_over(ctx: &mut Rltk) -> GameOverResult {
+	ctx.print_color_centered(15, RGB::named(rltk::YELLOW), RGB::named(rltk::BLACK), "Your journey has ended!");
+    ctx.print_color_centered(17, RGB::named(rltk::WHITE), RGB::named(rltk::BLACK), "One day, we'll tell you all about how you did.");
+    ctx.print_color_centered(18, RGB::named(rltk::WHITE), RGB::named(rltk::BLACK), "That day, sadly, is not in this chapter..");
+
+    ctx.print_color_centered(20, RGB::named(rltk::MAGENTA), RGB::named(rltk::BLACK), "Press any key to return to the menu.");
+
+	match ctx.key {
+		None => GameOverResult::NoSeleciton,
+		Some(_) => GameOverResult::QuitToMenu
+	}
 }
 
 pub fn draw_tooltips(ecs: &World, ctx: &mut Rltk) {

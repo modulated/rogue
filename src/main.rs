@@ -49,7 +49,8 @@ pub enum RunState {
 	ShowTargeting { range: i32, item: Entity },
 	MainMenu { menu_selection: MainMenuSelection },
 	SaveGame,
-	NextLevel
+	NextLevel,
+	GameOver
 }
 
 pub struct State {
@@ -159,6 +160,48 @@ impl State {
 		if let Some(player_health) = player_health {
 			player_health.hp = i32::max(player_health.hp, player_health.max_hp);
 		}
+	}
+
+	fn game_over_cleanup(&mut self) {
+		let mut to_delete = Vec::new();
+		for e in self.ecs.entities().join() {
+			to_delete.push(e);
+		}
+		for del in to_delete.iter() {
+			self.ecs.delete_entity(*del).expect("Game over cleanup delete failed.");
+		}
+
+		let worldmap;
+		{
+			let mut worldmap_resource = self.ecs.write_resource::<Map>();
+			*worldmap_resource = Map::new_map_rooms_and_corridors(1);
+			worldmap = worldmap_resource.clone();
+		}
+
+		for room in worldmap.rooms.iter().skip(1) {
+			spawner::spawn_room(&mut self.ecs, room, 1);
+		}
+
+		let (player_x, player_y) = worldmap.rooms[0].center();
+		let player_entity = spawner::player(&mut self.ecs, player_x, player_y);
+		let mut player_position = self.ecs.write_resource::<Point>();
+		*player_position = Point::new(player_x, player_y);
+		let mut position_components = self.ecs.write_storage::<Position>();
+		let mut player_entity_writer = self.ecs.write_resource::<Entity>();
+		*player_entity_writer = player_entity;
+		let player_pos_comp = position_components.get_mut(player_entity);
+		if let Some(player_pos_comp) = player_pos_comp {
+			player_pos_comp.x = player_x;
+			player_pos_comp.y = player_y;
+		}
+	
+		// Mark the player's visibility as dirty
+		let mut viewshed_components = self.ecs.write_storage::<Viewshed>();
+		let vs = viewshed_components.get_mut(player_entity);
+		if let Some(vs) = vs {
+			vs.dirty = true;
+		}
+
 	}
 }
 
@@ -302,6 +345,17 @@ impl GameState for State {
 			RunState::NextLevel => {
 				self.goto_next_level();
 				newrunstate = RunState::PreRun;
+			}
+
+			RunState::GameOver => {
+				let result = game_over(ctx);
+				match result {
+					GameOverResult::NoSeleciton => {}
+					GameOverResult::QuitToMenu => {
+						self.game_over_cleanup();
+						newrunstate = RunState::MainMenu { menu_selection: MainMenuSelection::NewGame };
+					}
+				}
 			}
 		}
 
