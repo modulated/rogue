@@ -1,6 +1,7 @@
 use rltk::{GameState, Rltk, Point};
+use saveload_system::delete_save;
 use specs::prelude::*;
-// use serde::{Serialize, Deserialize};
+use specs::saveload::{SimpleMarkerAllocator};
 mod components;
 pub use components::*;
 mod map;
@@ -15,6 +16,8 @@ mod gamelog;
 pub use gamelog::GameLog;
 mod spawner;
 pub use spawner::*;
+mod saveload_system;
+pub use saveload_system::{save_game};
 
 // Systems
 mod visibility_system;
@@ -114,7 +117,11 @@ impl GameState for State {
 					MainMenuResult::Selected{ selected } => {
 						match selected {
 							MainMenuSelection::NewGame => newrunstate = RunState::PreRun,
-							MainMenuSelection::LoadGame => newrunstate = RunState::PreRun,
+							MainMenuSelection::LoadGame => {
+								saveload_system::load_game(&mut self.ecs);
+								newrunstate = RunState::AwaitingInput;
+								delete_save();
+							}
 							MainMenuSelection::Quit => { std::process::exit(0); }
 						}
 					}
@@ -186,8 +193,7 @@ impl GameState for State {
 			}
 
 			RunState::SaveGame => {
-				let data = serde_json::to_string(&*self.ecs.fetch::<Map>()).unwrap();
-				println!("{}", data);
+				save_game(&mut self.ecs);
 				
 				newrunstate = RunState::MainMenu{ menu_selection: MainMenuSelection::LoadGame };
 			}
@@ -214,8 +220,9 @@ fn main() -> rltk::BError {
 	};
 
 	components::register(&mut gs.ecs);
+	gs.ecs.insert(SimpleMarkerAllocator::<SerializeMe>::new());
 
-	let map : Map = Map::new_map_rooms_and_corridors();
+	let map : Map = Map::new_map_rooms_and_corridors(1);
 	let (player_x, player_y) = map.rooms[0].center();
 
 	let player_entity = spawner::player(&mut gs.ecs, player_x, player_y);
