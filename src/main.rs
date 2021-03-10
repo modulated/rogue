@@ -1,5 +1,6 @@
 use rltk::{GameState, Rltk, Point};
 use specs::prelude::*;
+// use serde::{Serialize, Deserialize};
 mod components;
 pub use components::*;
 mod map;
@@ -182,6 +183,13 @@ impl GameState for State {
 						newrunstate = RunState::PlayerTurn;
 					}
 				}				
+			}
+
+			RunState::SaveGame => {
+				let data = serde_json::to_string(&*self.ecs.fetch::<Map>()).unwrap();
+				println!("{}", data);
+				
+				newrunstate = RunState::MainMenu{ menu_selection: MainMenuSelection::LoadGame };
 			}
 		}
 
