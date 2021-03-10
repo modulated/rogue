@@ -23,6 +23,8 @@ pub fn register(ecs: &mut World) {
 	ecs.register::<ProvidesHealing>();
 	ecs.register::<Ranged>();
 	ecs.register::<InflictsDamage>();
+	ecs.register::<AreaOfEffect>();
+	ecs.register::<Confusion>();
 }
 
 #[derive(Component)]
@@ -135,4 +137,14 @@ pub struct Ranged {
 #[derive(Component, Debug)]
 pub struct InflictsDamage {
 	pub damage: i32
+}
+
+#[derive(Component, Debug)]
+pub struct AreaOfEffect {
+	pub radius: i32
+}
+
+#[derive(Component, Debug)]
+pub struct Confusion {
+	pub duration: i32
 }
