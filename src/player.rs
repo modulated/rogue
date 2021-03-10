@@ -76,6 +76,7 @@ pub fn player_input(gs: &mut State, ctx: &mut Rltk) -> RunState {
 			VirtualKeyCode::G => get_item(&mut gs.ecs),
 			VirtualKeyCode::I => return RunState::ShowInventory,
 			VirtualKeyCode::D => return RunState::ShowDropItem,
+			VirtualKeyCode::R => return RunState::ShowRemoveItem,
 			VirtualKeyCode::Escape => return RunState::SaveGame,
 			VirtualKeyCode::Period => {
 				if try_next_level(&mut gs.ecs) {

@@ -33,7 +33,7 @@ use melee_combat_system::MeleeCombatSystem;
 mod damage_system;
 use damage_system::DamageSystem;
 mod inventory_system;
-pub use inventory_system::{InventorySystem, ItemUseSystem, ItemDropSystem};
+pub use inventory_system::{InventorySystem, ItemUseSystem, ItemDropSystem, ItemRemoveSystem};
 
 
 
@@ -45,6 +45,7 @@ pub enum RunState {
 	MonsterTurn, 
 	ShowInventory, 
 	ShowDropItem, 
+	ShowRemoveItem,
 	ShowTargeting { range: i32, item: Entity },
 	MainMenu { menu_selection: MainMenuSelection },
 	SaveGame,
@@ -73,6 +74,8 @@ impl State {
 		item.run_now(&self.ecs);
 		let mut drop_items = ItemDropSystem{};
 		drop_items.run_now(&self.ecs);
+		let mut remove_items = ItemRemoveSystem{};
+		remove_items.run_now(&self.ecs);
 		
 		self.ecs.maintain();
 	}
@@ -260,6 +263,20 @@ impl GameState for State {
 						intent.insert(*self.ecs.fetch::<Entity>(), WantsToDropItem{ item:item_entity}).expect("Unable to drop item");
 						newrunstate = RunState::PlayerTurn;
 					}
+				}
+			}
+
+			RunState::ShowRemoveItem => {
+				let result = remove_item_menu(self, ctx);
+				match result.0 {
+					ItemMenuResult::Cancel => newrunstate = RunState::AwaitingInput,
+					ItemMenuResult::NoResponse => {}
+					ItemMenuResult::Selected => {
+						let item_entity = result.1.unwrap();
+						let mut intent = self.ecs.write_storage::<WantsToRemoveItem>();
+						intent.insert(*self.ecs.fetch::<Entity>(), WantsToRemoveItem{ item: item_entity }).expect("Unable to insert intent to remove item.");
+						newrunstate = RunState::PlayerTurn;
+					} 
 				}
 			}
 

@@ -21,6 +21,7 @@ pub fn register(ecs: &mut World) {
 	ecs.register::<WantsToPickupItem>();
 	ecs.register::<InBackpack>();
 	ecs.register::<WantsToUseItem>();
+	ecs.register::<WantsToRemoveItem>();
 	ecs.register::<WantsToDropItem>();
 	ecs.register::<Consumable>();
 	ecs.register::<ProvidesHealing>();
@@ -30,6 +31,9 @@ pub fn register(ecs: &mut World) {
 	ecs.register::<Confusion>();
 	ecs.register::<Equippable>();
 	ecs.register::<Equipped>();
+	ecs.register::<MeleePowerBonus>();
+	ecs.register::<DefenseBonus>();
+	// Ser/Deser
 	ecs.register::<SimpleMarker<SerializeMe>>();
 	ecs.register::<SerializationHelper>();
 }
@@ -80,6 +84,11 @@ pub struct CombatStats {
 #[derive(Component, Debug, Clone, ConvertSaveload)]
 pub struct WantsToMelee {
 	pub target : Entity
+}
+
+#[derive(Component, Debug, Clone, ConvertSaveload)]
+pub struct WantsToRemoveItem {
+	pub item : Entity
 }
 
 #[derive(Component, Debug, ConvertSaveload)]
@@ -170,6 +179,15 @@ pub struct Equipped {
 	pub slot: EquipmentSlot
 }
 
+#[derive(Component, ConvertSaveload, Clone)]
+pub struct MeleePowerBonus {
+	pub power: i32
+}
+
+#[derive(Component, ConvertSaveload, Clone)]
+pub struct DefenseBonus {
+	pub defense: i32
+}
 
 // Serialization Helper Code
 pub struct SerializeMe;
