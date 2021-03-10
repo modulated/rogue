@@ -3,7 +3,7 @@ use specs::prelude::*;
 use std::cmp::{max, min};
 use crate::TileType;
 
-use super::{Position, Player, Viewshed, State, Map, RunState, CombatStats, WantsToMelee, GameLog, Item, WantsToPickupItem};
+use super::{Position, Player, Viewshed, State, Map, RunState, CombatStats, WantsToMelee, GameLog, Item, WantsToPickupItem, Monster};
 
 pub fn try_move_player(delta_x: i32, delta_y: i32, ecs: &mut World) {
 	let mut positions = ecs.write_storage::<Position>();
@@ -82,6 +82,8 @@ pub fn player_input(gs: &mut State, ctx: &mut Rltk) -> RunState {
 					return RunState::NextLevel;
 				}
 			}
+			VirtualKeyCode::Space |
+			VirtualKeyCode::Numpad5 => return skip_turn(&mut gs.ecs),
 
 			_ => { return RunState::AwaitingInput }
 		},
@@ -124,4 +126,29 @@ pub fn try_next_level(ecs: &mut World) -> bool {
 		gamelog.entries.push("There is no way down from here.".to_string());
 		false
 	}
+}
+
+fn skip_turn(ecs: &mut World) -> RunState {
+	let player_entity = ecs.fetch::<Entity>();
+	let viewshed_component = ecs.read_storage::<Viewshed>();
+	let monsters = ecs.read_storage::<Monster>();
+	let worldmap_resource = ecs.fetch::<Map>();
+
+	let mut can_heal = true;
+	let viewshed = viewshed_component.get(*player_entity).unwrap();
+	for tile in viewshed.visible_tiles.iter() {
+		let idx = worldmap_resource.xy_idx(tile.x, tile.y);
+		for entity_id in worldmap_resource.tile_content[idx].iter() {
+			let mob = monsters.get(*entity_id);
+			if let Some(_) = mob { can_heal = false; }
+		}
+	}
+
+	if can_heal {
+		let mut health_components = ecs.write_storage::<CombatStats>();
+		let player_hp = health_components.get_mut(*player_entity).unwrap();
+		player_hp.hp = i32::min(player_hp.hp + 1, player_hp.max_hp);
+	}
+
+	RunState::PlayerTurn
 }

@@ -1,9 +1,10 @@
 use rltk::{ RGB, RandomNumberGenerator };
 use specs::{prelude::*, saveload::MarkedBuilder, saveload::SimpleMarker};
-use super::{CombatStats, Player, Renderable, Name, Position, Viewshed, Monster, BlocksTile, MAPWIDTH, Rect, Consumable, ProvidesHealing, Item, Ranged, InflictsDamage, AreaOfEffect, Confusion, SerializeMe};
+use std::collections::HashMap;
 
-const MAX_MONSTERS: i32 = 4;
-const MAX_ITEMS: i32 = 2;
+use super::{CombatStats, Player, Renderable, Name, Position, Viewshed, Monster, BlocksTile, MAPWIDTH, Rect, Consumable, ProvidesHealing, Item, Ranged, InflictsDamage, AreaOfEffect, Confusion, SerializeMe, RandomTable};
+
+const MAX_ENTITIES: i32 = 4;
 
 // Spawns player and returns its entity object
 pub fn player(ecs: &mut World, player_x: i32, player_y: i32) -> Entity {
@@ -23,29 +24,44 @@ pub fn player(ecs: &mut World, player_x: i32, player_y: i32) -> Entity {
 		.build()
 }
 
-pub fn random_monster(ecs: &mut World, x: i32, y: i32) {
-	let roll: i32;
-	{
-		let mut rng = ecs.write_resource::<RandomNumberGenerator>();
-		roll = rng.roll_dice(1, 2);
-	}
-	match roll {
-		1 => orc(ecs, x, y),
-		_ => goblin(ecs, x, y)
-	}
-}
+pub fn spawn_room(ecs: &mut World, room: &Rect, map_depth: i32) {
+	let spawn_table = room_table(map_depth);
+	let mut spawn_points: HashMap<usize, String> = HashMap::new();
 
-pub fn random_item(ecs: &mut World, x: i32, y: i32) {
-	let roll: i32;
 	{
 		let mut rng = ecs.write_resource::<RandomNumberGenerator>();
-		roll = rng.roll_dice(1, 4);
+		let num_spawns = rng.roll_dice(1, MAX_ENTITIES + 3) + (map_depth - 1) - 3;
+
+		for _i in 0..num_spawns {
+			let mut added = false;
+			let mut tries = 0;
+			while !added && tries < 20 {
+				let x = (room.x1 + rng.roll_dice(1, i32::abs(room.x2 - room.x1))) as usize;
+				let y = (room.y1 + rng.roll_dice(1, i32::abs(room.y2 - room.y1))) as usize;
+				let idx = (y * MAPWIDTH) + x;
+				if !spawn_points.contains_key(&idx) {
+					spawn_points.insert(idx, spawn_table.roll(&mut rng));
+					added = true;
+				} else {
+					tries += 1;
+				}
+			}
+		}
 	}
-	match roll {
-		1 => health_potion(ecs, x, y),
-		2 => magic_missile_scroll(ecs, x, y),
-		3 => confusion_scroll(ecs, x, y),
-		_ => fireball_scroll(ecs, x, y)
+
+	for spawn in spawn_points.iter() {
+		let x = (*spawn.0 % MAPWIDTH) as i32;
+		let y = (*spawn.0 / MAPWIDTH) as i32;
+
+		match spawn.1.as_ref() {
+			"Goblin" => goblin(ecs, x, y),
+			"Orc" => orc(ecs, x, y),
+			"Health Potion" => health_potion(ecs, x, y),
+			"Fireball Scroll" => fireball_scroll(ecs, x, y),
+			"Confusion Scroll" => confusion_scroll(ecs, x, y),
+			"Magic Missile Scroll" => magic_missile_scroll(ecs, x, y),
+			_ => {}
+		}
 	}
 }
 
@@ -125,68 +141,59 @@ fn fireball_scroll(ecs: &mut World, x: i32, y: i32) {
 }
 
 fn confusion_scroll(ecs: &mut World, x: i32, y: i32) {
-    ecs.create_entity()
-        .with(Position{ x, y })
-        .with(Renderable{
-            glyph: rltk::to_cp437('§'),
-            fg: RGB::named(rltk::PINK),
-            bg: RGB::named(rltk::BLACK),
-            render_order: 2
-        })
-        .with(Name{ name : "Confusion Scroll".to_string() })
-        .with(Item{})
-        .with(Consumable{})
-        .with(Ranged{ range: 6 })
-        .with(Confusion{ duration: 4 })
+	ecs.create_entity()
+		.with(Position{ x, y })
+		.with(Renderable{
+			glyph: rltk::to_cp437('§'),
+			fg: RGB::named(rltk::PINK),
+			bg: RGB::named(rltk::BLACK),
+			render_order: 2
+		})
+		.with(Name{ name : "Confusion Scroll".to_string() })
+		.with(Item{})
+		.with(Consumable{})
+		.with(Ranged{ range: 6 })
+		.with(Confusion{ duration: 4 })
 		.marked::<SimpleMarker<SerializeMe>>()
-        .build();
+		.build();
 }
 
-pub fn spawn_room(ecs: &mut World, room: &Rect) {
-	let mut monster_spawn_points: Vec<usize> = Vec::new();
-	let mut item_spawn_points: Vec<usize> = Vec::new();
+fn dagger(ecs: &mut World, x: i32, y: i32) {
+	ecs.create_entity()
+		.with(Position{ x, y })
+		.with(Renderable{
+			glyph: rltk::to_cp437('¶'),
+			fg: RGB::named(rltk::CYAN),
+			bg: RGB::named(rltk::BLACK),
+			render_order: 2
+		})
+		.with(Name{ name : "Dagger".to_string() })
+		.with(Item{})		
+		.marked::<SimpleMarker<SerializeMe>>()
+		.build();
+}
 
-	{
-		let mut rng = ecs.write_resource::<RandomNumberGenerator>();
-		let num_monsters = rng.roll_dice(1, MAX_MONSTERS + 2) - 3;
-		let num_items = rng.roll_dice(1, MAX_ITEMS + 2) - 2;
+fn dagger(ecs: &mut World, x: i32, y: i32) {
+	ecs.create_entity()
+		.with(Position{ x, y })
+		.with(Renderable{
+			glyph: rltk::to_cp437('¶'),
+			fg: RGB::named(rltk::CYAN),
+			bg: RGB::named(rltk::BLACK),
+			render_order: 2
+		})
+		.with(Name{ name : "Dagger".to_string() })
+		.with(Item{})		
+		.marked::<SimpleMarker<SerializeMe>>()
+		.build();
+}
 
-		for _i in 0..num_monsters {
-			let mut added = false;
-			while !added {
-				let x = (room.x1 + rng.roll_dice(1, i32::abs(room.x2 - room.x1))) as usize;
-				let y = (room.y1 + rng.roll_dice(1, i32::abs(room.y2 - room.y1))) as usize;
-				let idx = (y * MAPWIDTH) + x;
-				if !monster_spawn_points.contains(&idx) {
-					monster_spawn_points.push(idx);
-					added = true;
-				}
-			}
-		}
-
-		for _i in 0..num_items {
-			let mut added = false;
-			while !added {
-				let x = (room.x1 + rng.roll_dice(1, i32::abs(room.x2 - room.x1))) as usize;
-				let y = (room.y1 + rng.roll_dice(1, i32::abs(room.y2 - room.y1))) as usize;
-				let idx = (y * MAPWIDTH) + x;
-				if !item_spawn_points.contains(&idx) {
-					item_spawn_points.push(idx);
-					added = true;
-				}
-			}
-		}
-	}
-
-	for idx in monster_spawn_points.iter() {
-		let x = *idx % MAPWIDTH;
-		let y = *idx / MAPWIDTH;
-		random_monster(ecs, x as i32, y as i32);
-	}
-
-	for idx in item_spawn_points.iter() {
-		let x = *idx % MAPWIDTH;
-		let y = *idx / MAPWIDTH;
-		random_item(ecs, x as i32, y as i32);
-	}
+fn room_table(map_depth: i32) -> RandomTable {
+	RandomTable::new()
+		.add("Goblin", 10)
+		.add("Orc", 1 + map_depth)
+		.add("Health Potion", 7)
+		.add("Fireball Scroll", 2 + map_depth)
+		.add("Confusion Scroll", 2 + map_depth)
+		.add("Magic Missile Scroll", 4)
 }
