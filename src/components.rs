@@ -27,12 +27,17 @@ pub fn register(ecs: &mut World) {
 	ecs.register::<ProvidesHealing>();
 	ecs.register::<Ranged>();
 	ecs.register::<InflictsDamage>();
+	ecs.register::<MagicMapper>();
 	ecs.register::<AreaOfEffect>();
 	ecs.register::<Confusion>();
 	ecs.register::<Equippable>();
 	ecs.register::<Equipped>();
 	ecs.register::<MeleePowerBonus>();
 	ecs.register::<DefenseBonus>();
+	ecs.register::<Hidden>();
+	ecs.register::<EntryTrigger>();
+	ecs.register::<EntityMoved>();
+	ecs.register::<SingleActivation>();
 	// Ser/Deser
 	ecs.register::<SimpleMarker<SerializeMe>>();
 	ecs.register::<SerializationHelper>();
@@ -165,6 +170,9 @@ pub struct Confusion {
 	pub duration: i32
 }
 
+#[derive(Component, Debug, Serialize, Deserialize, Clone)]
+pub struct MagicMapper {}
+
 #[derive(PartialEq, Clone, Copy, Serialize, Deserialize)]
 pub enum EquipmentSlot { Melee, Shield }
 
@@ -189,6 +197,19 @@ pub struct DefenseBonus {
 	pub defense: i32
 }
 
+#[derive(Component, Serialize, Deserialize, Clone)]
+pub struct Hidden {}
+
+#[derive(Component, Serialize, Deserialize, Clone)]
+pub struct EntryTrigger {}
+
+#[derive(Component, Serialize, Deserialize, Clone)]
+pub struct EntityMoved {}
+
+#[derive(Component, Serialize, Deserialize, Clone)]
+pub struct SingleActivation {}
+
+
 // Serialization Helper Code
 pub struct SerializeMe;
 
@@ -196,3 +217,4 @@ pub struct SerializeMe;
 pub struct SerializationHelper {
 	pub map : Map
 }
+

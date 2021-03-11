@@ -2,9 +2,11 @@ use rltk::{ RGB, RandomNumberGenerator };
 use specs::{prelude::*, saveload::MarkedBuilder, saveload::SimpleMarker};
 use std::collections::HashMap;
 
-use crate::{DefenseBonus, EquipmentSlot, Equippable, MeleePowerBonus};
+use crate::{DefenseBonus, EntryTrigger, EquipmentSlot, Equippable, MagicMapper, MeleePowerBonus, SingleActivation};
 
-use super::{CombatStats, Player, Renderable, Name, Position, Viewshed, Monster, BlocksTile, MAPWIDTH, Rect, Consumable, ProvidesHealing, Item, Ranged, InflictsDamage, AreaOfEffect, Confusion, SerializeMe, RandomTable};
+use super::{CombatStats, Player, Renderable, Name, Position, Viewshed, Monster, BlocksTile, 
+	MAPWIDTH, Rect, Consumable, ProvidesHealing, Item, Ranged, InflictsDamage, AreaOfEffect, 
+	Confusion, SerializeMe, RandomTable, Hidden};
 
 const MAX_ENTITIES: i32 = 4;
 
@@ -62,10 +64,12 @@ pub fn spawn_room(ecs: &mut World, room: &Rect, map_depth: i32) {
 			"Fireball Scroll" => fireball_scroll(ecs, x, y),
 			"Confusion Scroll" => confusion_scroll(ecs, x, y),
 			"Magic Missile Scroll" => magic_missile_scroll(ecs, x, y),
+			"Magic Mapping Scroll" => magic_mapping_scroll(ecs,x,y),
 			"Dagger" => dagger(ecs, x, y),
 			"Shield" => shield(ecs, x, y),
 			"Tower Shield" => tower_shield(ecs, x, y),
 			"Longsword" => longsword(ecs, x, y),
+			"Bear Trap" => bear_trap(ecs, x, y),
 			_ => {}
 		}
 	}
@@ -123,6 +127,23 @@ fn magic_missile_scroll(ecs: &mut World, x: i32, y: i32) {
 		.with(Consumable{})
 		.with(Ranged{range: 6})
 		.with(InflictsDamage{ damage: 8})
+		.marked::<SimpleMarker<SerializeMe>>()
+		.build();
+}
+
+fn magic_mapping_scroll(ecs: &mut World, x: i32, y: i32) {
+	ecs.create_entity()
+		.with(Position{x, y})
+		.with(Renderable{
+			glyph: rltk::to_cp437('§'),
+			fg: RGB::named(rltk::CYAN3),
+			bg: RGB::named(rltk::BLACK),
+			render_order: 2
+		})
+		.with(Name{ name: "Magic Mapping Scroll".to_string()})
+		.with(Item{})
+		.with(Consumable{})
+		.with(MagicMapper{})
 		.marked::<SimpleMarker<SerializeMe>>()
 		.build();
 }
@@ -232,6 +253,24 @@ fn tower_shield(ecs: &mut World, x: i32, y: i32) {
 		.build();
 }
 
+fn bear_trap(ecs: &mut World, x: i32, y: i32) {
+	ecs.create_entity()
+		.with(Position{ x, y })
+		.with(Renderable{
+			glyph: rltk::to_cp437('^'),
+			fg: RGB::named(rltk::RED),
+			bg: RGB::named(rltk::BLACK),
+			render_order: 2
+		})
+		.with(Name{ name : "Bear Trap".to_string() })
+		.with(Hidden{})
+		.with(EntryTrigger{})
+		.with(InflictsDamage{damage: 6})
+		.with(SingleActivation{})
+		.marked::<SimpleMarker<SerializeMe>>()
+		.build();
+}
+
 fn room_table(map_depth: i32) -> RandomTable {
 	RandomTable::new()
 		.add("Goblin", 10)
@@ -244,4 +283,6 @@ fn room_table(map_depth: i32) -> RandomTable {
 		.add("Shield", 3)
 		.add("Longsword", map_depth - 1)
 		.add("Tower Shield", map_depth - 1)
+		.add("Magic Mapping Scroll", 2)
+		.add("Bear Trap", 2)
 }

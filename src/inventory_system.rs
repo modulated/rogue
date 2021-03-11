@@ -1,6 +1,8 @@
 use specs::prelude::*;
 
-use super::{WantsToPickupItem, Name, InBackpack, Map, Position, GameLog, CombatStats, SufferDamage, WantsToUseItem, Consumable, WantsToDropItem, ProvidesHealing, InflictsDamage, AreaOfEffect, Confusion, Equippable, Equipped, WantsToRemoveItem};
+use crate::MagicMapper;
+
+use super::{WantsToPickupItem, Name, InBackpack, Map, Position, GameLog, CombatStats, SufferDamage, WantsToUseItem, Consumable, WantsToDropItem, ProvidesHealing, InflictsDamage, AreaOfEffect, Confusion, Equippable, Equipped, WantsToRemoveItem, RunState};
 
 pub struct InventorySystem {}
 
@@ -12,11 +14,17 @@ impl<'a> System<'a> for InventorySystem {
 		WriteStorage<'a, WantsToPickupItem>,
 		WriteStorage<'a, Position>,
 		ReadStorage<'a, Name>,
-		WriteStorage<'a, InBackpack>
+		WriteStorage<'a, InBackpack>,		
 	);
 
 	fn run(&mut self, data: Self::SystemData) {
-		let (player_entity, mut gamelog, mut wants_pickup, mut positions, names, mut backpack) = data;
+		let (player_entity, 
+			mut gamelog, 
+			mut wants_pickup, 
+			mut positions, 
+			names, 
+			mut backpack			
+		) = data;
 
 		for pickup in wants_pickup.join() {
 			positions.remove(pickup.item);
@@ -50,7 +58,9 @@ impl<'a> System<'a> for ItemUseSystem {
 		WriteStorage<'a, Confusion>,
 		WriteStorage<'a, InBackpack>,
 		WriteStorage<'a, Equipped>,
-		ReadStorage<'a, Equippable>
+		ReadStorage<'a, Equippable>,
+		ReadStorage<'a, MagicMapper>,
+		WriteExpect<'a, RunState>
 	);
 
 	fn run(&mut self, data: Self::SystemData) {
@@ -69,7 +79,9 @@ impl<'a> System<'a> for ItemUseSystem {
 			mut confused, 
 			mut backpack, 
 			mut equipped,
-			equippable
+			equippable,
+			magic_mapper,
+			mut runstate
 		) = data;
 
 		for (entity, useitem) in (&entities, &wants_use).join() {
@@ -105,6 +117,7 @@ impl<'a> System<'a> for ItemUseSystem {
 				}
 			}
 			
+			// If equippable
 			let item_equippable = equippable.get(useitem.item);
 			match item_equippable {
 				None => {}
@@ -196,6 +209,18 @@ impl<'a> System<'a> for ItemUseSystem {
 			}
 			for mob in add_confusion.iter() {
 				confused.insert(mob.0, Confusion{duration: mob.1}).expect("Unable to apply confusion");
+			}
+
+			// If its a magic mapper
+			let is_mapper = magic_mapper.get(useitem.item);
+			match is_mapper {
+				None => {}
+				Some(_) => {
+					used_item = true;
+					gamelog.entries.push("The map is revealed to you!".to_string());
+
+					*runstate = RunState::MagicMapReveal{ row: 0 };
+				}
 			}
 
 			// Delete the item if successfully used

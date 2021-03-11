@@ -34,7 +34,8 @@ mod damage_system;
 use damage_system::DamageSystem;
 mod inventory_system;
 pub use inventory_system::{InventorySystem, ItemUseSystem, ItemDropSystem, ItemRemoveSystem};
-
+mod trigger_system;
+pub use trigger_system::TriggerSystem;
 
 
 #[derive(PartialEq, Copy, Clone)]
@@ -50,7 +51,8 @@ pub enum RunState {
 	MainMenu { menu_selection: MainMenuSelection },
 	SaveGame,
 	NextLevel,
-	GameOver
+	GameOver,
+	MagicMapReveal{ row: i32 }
 }
 
 pub struct State {
@@ -63,6 +65,8 @@ impl State {
 		vis.run_now(&self.ecs);
 		let mut mob = MonsterAI{};
 		mob.run_now(&self.ecs);
+		let mut trigger_system = TriggerSystem{};
+		trigger_system.run_now(&self.ecs);
 		let mut mapindex = MapIndexingSystem{};
 		mapindex.run_now(&self.ecs);
 		let mut melee = MeleeCombatSystem{};
@@ -223,12 +227,13 @@ impl GameState for State {
 				{
 					let positions = self.ecs.read_storage::<Position>();
 					let renderables = self.ecs.read_storage::<Renderable>();
+					let hidden = self.ecs.read_storage::<Hidden>();
 					let map = self.ecs.fetch::<Map>();
 					
-					let mut data = (&positions, &renderables).join().collect::<Vec<_>>();
+					let mut data = (&positions, &renderables, !&hidden).join().collect::<Vec<_>>();
 					data.sort_by(|&a, &b| b.1.render_order.cmp(&a.1.render_order));
 			
-					for (pos, render) in data.iter() {
+					for (pos, render, _hidden) in data.iter() {
 						let idx = map.xy_idx(pos.x, pos.y);
 						if map.visible_tiles[idx] { ctx.set(pos.x, pos.y, render.fg, render.bg, render.glyph) }
 					}
@@ -268,7 +273,10 @@ impl GameState for State {
 			RunState::PlayerTurn => {
 				self.run_systems();
 				self.ecs.maintain();
-				newrunstate = RunState::MonsterTurn;
+				match *self.ecs.fetch::<RunState>() {
+					RunState::MagicMapReveal{..} => newrunstate = RunState::MagicMapReveal{row:0},
+					_ => newrunstate = RunState::MonsterTurn
+				}				
 			}
 			RunState::MonsterTurn => {
 				self.run_systems();
@@ -355,6 +363,19 @@ impl GameState for State {
 						self.game_over_cleanup();
 						newrunstate = RunState::MainMenu { menu_selection: MainMenuSelection::NewGame };
 					}
+				}
+			}
+
+			RunState::MagicMapReveal{row} => {
+				let mut map = self.ecs.fetch_mut::<Map>();
+				for x in 0..MAPWIDTH {
+					let idx = map.xy_idx(x as i32, row);
+					map.revealed_tiles[idx] = true;
+				}
+				if row as usize == MAPHEIGHT - 1 {
+					newrunstate = RunState::MonsterTurn;
+				} else {
+					newrunstate = RunState::MagicMapReveal{ row: row + 1 };
 				}
 			}
 		}

@@ -2,7 +2,7 @@ use rltk:: {RGB, Rltk, Point, VirtualKeyCode };
 use specs::prelude::*;
 use crate::saveload_system::{does_save_exist};
 
-use super::{CombatStats, Player, GameLog, Map, Name, Position, State, InBackpack, Viewshed, RunState, Equipped};
+use super::{CombatStats, Player, GameLog, Map, Name, Position, State, InBackpack, Viewshed, RunState, Equipped, Hidden};
 
 #[derive(PartialEq, Copy, Clone)]
 pub enum ItemMenuResult { Cancel, NoResponse, Selected }
@@ -93,7 +93,7 @@ pub fn main_menu(gs : &mut State, ctx : &mut Rltk) -> MainMenuResult {
 	let save_exists = does_save_exist();
 	let runstate = gs.ecs.fetch::<RunState>();
 
-	ctx.print_color_centered(15, RGB::named(rltk::YELLOW), RGB::named(rltk::BLACK), "Rust Roguelike Tutorial");
+	ctx.print_color_centered(15, RGB::named(rltk::YELLOW), RGB::named(rltk::BLACK), "Rogue");
 
 	if let RunState::MainMenu{ menu_selection : selection } = *runstate {
 		if selection == MainMenuSelection::NewGame {
@@ -157,8 +157,7 @@ pub fn main_menu(gs : &mut State, ctx : &mut Rltk) -> MainMenuResult {
 
 pub fn game_over(ctx: &mut Rltk) -> GameOverResult {
 	ctx.print_color_centered(15, RGB::named(rltk::YELLOW), RGB::named(rltk::BLACK), "Your journey has ended!");
-    ctx.print_color_centered(17, RGB::named(rltk::WHITE), RGB::named(rltk::BLACK), "One day, we'll tell you all about how you did.");
-    ctx.print_color_centered(18, RGB::named(rltk::WHITE), RGB::named(rltk::BLACK), "That day, sadly, is not in this chapter..");
+    ctx.print_color_centered(17, RGB::named(rltk::WHITE), RGB::named(rltk::BLACK), "You fall to the darkness deep within.");
 
     ctx.print_color_centered(20, RGB::named(rltk::MAGENTA), RGB::named(rltk::BLACK), "Press any key to return to the menu.");
 
@@ -172,12 +171,13 @@ pub fn draw_tooltips(ecs: &World, ctx: &mut Rltk) {
 	let map = ecs.fetch::<Map>();
 	let names = ecs.read_storage::<Name>();
 	let positions = ecs.read_storage::<Position>();
+	let hidden = ecs.read_storage::<Hidden>();
 
 	let mouse_pos = ctx.mouse_pos();
 	if mouse_pos.0 >= map.width || mouse_pos.1 >= map.height { return; }
 
 	let mut tooltip: Vec<String> = Vec::new();
-	for (name, position) in (&names, &positions).join() {
+	for (name, position, _hidden) in (&names, &positions, !&hidden).join() {
 		let idx = map.xy_idx(position.x, position.y);
 		if position.x == mouse_pos.0 && position.y == mouse_pos.1 && map.visible_tiles[idx] {
 			tooltip.push(name.name.to_string());
