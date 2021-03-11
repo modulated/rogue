@@ -128,20 +128,21 @@ impl State {
 			self.ecs.delete_entity(target).expect("Unable to delete entity.");
 		}
 
-		let worldmap;
+		let mut worldmap;
 		let current_depth;
+		let player_start;
 		{
 			let mut worldmap_resource = self.ecs.write_resource::<Map>();
 			current_depth = worldmap_resource.depth;
-			*worldmap_resource = map_builders::build_random_map(current_depth + 1);
+			let (newmap, start) = map_builders::build_random_map(current_depth + 1);
+			*worldmap_resource = newmap;
+			player_start = start;
 			worldmap = worldmap_resource.clone();
 		}
 
-		for room in worldmap.rooms.iter().skip(1) {
-			spawner::spawn_room(&mut self.ecs, room, current_depth + 1);
-		}
+		map_builders::spawn(&mut worldmap, &mut self.ecs, current_depth);
 
-		let (player_x, player_y) = worldmap.rooms[0].center();
+		let (player_x, player_y) = (player_start.x, player_start.y);
 		let mut player_position = self.ecs.write_resource::<Point>();
 		*player_position = Point::new(player_x, player_y);
 		let mut position_components = self.ecs.write_storage::<Position>();
@@ -176,18 +177,20 @@ impl State {
 			self.ecs.delete_entity(*del).expect("Game over cleanup delete failed.");
 		}
 
-		let worldmap;
+		let mut worldmap;
+		let player_start;
 		{
 			let mut worldmap_resource = self.ecs.write_resource::<Map>();
-			*worldmap_resource = map_builders::build_random_map(1);
+			let (newmap, start)  = map_builders::build_random_map(1);
+			*worldmap_resource = newmap;
+			player_start = start;
 			worldmap = worldmap_resource.clone();
 		}
 
-		for room in worldmap.rooms.iter().skip(1) {
-			spawner::spawn_room(&mut self.ecs, room, 1);
-		}
+		map_builders::spawn(&mut worldmap, &mut self.ecs, 1);
 
-		let (player_x, player_y) = worldmap.rooms[0].center();
+
+		let (player_x, player_y) = (player_start.x, player_start.y);
 		let player_entity = spawner::player(&mut self.ecs, player_x, player_y);
 		let mut player_position = self.ecs.write_resource::<Point>();
 		*player_position = Point::new(player_x, player_y);
@@ -404,15 +407,15 @@ fn main() -> rltk::BError {
 	components::register(&mut gs.ecs);
 	gs.ecs.insert(SimpleMarkerAllocator::<SerializeMe>::new());
 
-	let map : Map = map_builders::build_random_map(1);
-	let (player_x, player_y) = map.rooms[0].center();
+	let (mut map, player_start) = map_builders::build_random_map(1);
+	let (player_x, player_y) = (player_start.x, player_start.y);
 
 	let player_entity = spawner::player(&mut gs.ecs, player_x, player_y);
 
 	gs.ecs.insert(rltk::RandomNumberGenerator::new());
-	for room in map.rooms.iter().skip(1) {		
-		spawner::spawn_room(&mut gs.ecs, room, 1);
-	}
+	
+	map_builders::spawn(&mut map, &mut gs.ecs, 1);
+
 
 	gs.ecs.insert(map);
 	gs.ecs.insert(Point::new(player_x, player_y));

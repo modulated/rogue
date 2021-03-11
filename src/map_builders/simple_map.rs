@@ -6,15 +6,21 @@ use specs::prelude::*;
 pub struct SimpleMapBuilder {}
 
 impl MapBuilder for SimpleMapBuilder {
-	fn build(new_depth: i32) -> Map {
+	fn build(new_depth: i32) -> (Map, Position) {
 		let mut map = Map::new(new_depth);
-		SimpleMapBuilder::rooms_and_corridors(&mut map);
-		map
+		let playerpos = SimpleMapBuilder::rooms_and_corridors(&mut map);		
+		(map, playerpos)
+	}
+
+	fn spawn(map: &mut Map, ecs: &mut World, new_depth: i32) {
+		for room in map.rooms.iter().skip(1) {
+			spawner::spawn_room(ecs, room, new_depth)
+		}
 	}
 }
 
 impl SimpleMapBuilder {
-	fn rooms_and_corridors(map: &mut Map) {
+	fn rooms_and_corridors(map: &mut Map) -> Position {
 
 		const MAX_ROOMS : i32 = 30;
 		const MIN_SIZE : i32 = 6;
@@ -55,5 +61,7 @@ impl SimpleMapBuilder {
 		let stairs_idx = map.xy_idx(stairs_position.0, stairs_position.1);
 		map.tiles[stairs_idx] = TileType::DownStairs;
 
+		let start_pos = map.rooms[0].center();
+		Position{ x: start_pos.0, y: start_pos.1 }
 	}
 }
