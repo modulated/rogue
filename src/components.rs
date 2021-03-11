@@ -43,7 +43,7 @@ pub fn register(ecs: &mut World) {
 	ecs.register::<SerializationHelper>();
 }
 
-#[derive(Component, ConvertSaveload)]
+#[derive(Component, ConvertSaveload, Clone, Copy)]
 pub struct Position {
 	pub x: i32,
 	pub y: i32,
