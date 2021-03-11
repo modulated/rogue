@@ -128,19 +128,21 @@ impl State {
 			self.ecs.delete_entity(target).expect("Unable to delete entity.");
 		}
 
+		let mut builder;
 		let mut worldmap;
 		let current_depth;
 		let player_start;
 		{
 			let mut worldmap_resource = self.ecs.write_resource::<Map>();
 			current_depth = worldmap_resource.depth;
-			let (newmap, start) = map_builders::build_random_map(current_depth + 1);
+			builder = map_builders::random_builder(current_depth + 1);
+			let (newmap, start) = builder.build_map(current_depth + 1);
 			*worldmap_resource = newmap;
 			player_start = start;
 			worldmap = worldmap_resource.clone();
 		}
 
-		map_builders::spawn(&mut worldmap, &mut self.ecs, current_depth);
+		builder.spawn_entities(&mut worldmap, &mut self.ecs, current_depth);
 
 		let (player_x, player_y) = (player_start.x, player_start.y);
 		let mut player_position = self.ecs.write_resource::<Point>();
@@ -177,17 +179,18 @@ impl State {
 			self.ecs.delete_entity(*del).expect("Game over cleanup delete failed.");
 		}
 
+		let mut builder = map_builders::random_builder(1);
 		let mut worldmap;
 		let player_start;
 		{
 			let mut worldmap_resource = self.ecs.write_resource::<Map>();
-			let (newmap, start)  = map_builders::build_random_map(1);
+			let (newmap, start)  = builder.build_map(1);
 			*worldmap_resource = newmap;
 			player_start = start;
 			worldmap = worldmap_resource.clone();
 		}
 
-		map_builders::spawn(&mut worldmap, &mut self.ecs, 1);
+		builder.spawn_entities(&mut worldmap, &mut self.ecs, 1);
 
 
 		let (player_x, player_y) = (player_start.x, player_start.y);
@@ -407,14 +410,15 @@ fn main() -> rltk::BError {
 	components::register(&mut gs.ecs);
 	gs.ecs.insert(SimpleMarkerAllocator::<SerializeMe>::new());
 
-	let (mut map, player_start) = map_builders::build_random_map(1);
+	let mut builder = map_builders::random_builder(1);
+	let (mut map, player_start) = builder.build_map(1);
 	let (player_x, player_y) = (player_start.x, player_start.y);
 
 	let player_entity = spawner::player(&mut gs.ecs, player_x, player_y);
 
 	gs.ecs.insert(rltk::RandomNumberGenerator::new());
 	
-	map_builders::spawn(&mut map, &mut gs.ecs, 1);
+	builder.spawn_entities(&mut map, &mut gs.ecs, 1);
 
 
 	gs.ecs.insert(map);
