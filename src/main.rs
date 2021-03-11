@@ -20,6 +20,7 @@ mod random_table;
 pub use random_table::RandomTable;
 mod saveload_system;
 pub use saveload_system::{save_game};
+pub mod map_builders;
 
 // Systems
 mod visibility_system;
@@ -132,7 +133,7 @@ impl State {
 		{
 			let mut worldmap_resource = self.ecs.write_resource::<Map>();
 			current_depth = worldmap_resource.depth;
-			*worldmap_resource = Map::new_map_rooms_and_corridors(current_depth + 1);
+			*worldmap_resource = map_builders::build_random_map(current_depth + 1);
 			worldmap = worldmap_resource.clone();
 		}
 
@@ -178,7 +179,7 @@ impl State {
 		let worldmap;
 		{
 			let mut worldmap_resource = self.ecs.write_resource::<Map>();
-			*worldmap_resource = Map::new_map_rooms_and_corridors(1);
+			*worldmap_resource = map_builders::build_random_map(1);
 			worldmap = worldmap_resource.clone();
 		}
 
@@ -403,7 +404,7 @@ fn main() -> rltk::BError {
 	components::register(&mut gs.ecs);
 	gs.ecs.insert(SimpleMarkerAllocator::<SerializeMe>::new());
 
-	let map : Map = Map::new_map_rooms_and_corridors(1);
+	let map : Map = map_builders::build_random_map(1);
 	let (player_x, player_y) = map.rooms[0].center();
 
 	let player_entity = spawner::player(&mut gs.ecs, player_x, player_y);
