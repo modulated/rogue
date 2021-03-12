@@ -2,7 +2,10 @@ use super::{Map, Rect, TileType, Position, spawner};
 mod simple_map;
 use simple_map::SimpleMapBuilder;
 mod common;
+use common::*;
 use specs::prelude::*;
+mod bsp_dungeon;
+use bsp_dungeon::BspDungeonBuilder;
 
 pub trait MapBuilder {
 	fn build_map(&mut self);
@@ -14,5 +17,5 @@ pub trait MapBuilder {
 }
 
 pub fn random_builder(new_depth: i32) -> Box<dyn MapBuilder> {
-	Box::new(SimpleMapBuilder::new(new_depth))
+	Box::new(BspDungeonBuilder::new(new_depth))
 }
