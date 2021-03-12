@@ -1,8 +1,6 @@
 use specs::prelude::*;
 
-use crate::MagicMapper;
-
-use super::{WantsToPickupItem, Name, InBackpack, Map, Position, GameLog, CombatStats, SufferDamage, WantsToUseItem, Consumable, WantsToDropItem, ProvidesHealing, InflictsDamage, AreaOfEffect, Confusion, Equippable, Equipped, WantsToRemoveItem, RunState};
+use super::{WantsToPickupItem, Name, InBackpack, Map, Position, GameLog, CombatStats, SufferDamage, WantsToUseItem, Consumable, WantsToDropItem, ProvidesHealing, InflictsDamage, AreaOfEffect, Confusion, Equippable, Equipped, WantsToRemoveItem, RunState, MagicMapper};
 
 pub struct InventorySystem {}
 
