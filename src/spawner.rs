@@ -70,6 +70,7 @@ pub fn spawn_room(ecs: &mut World, room: &Rect, map_depth: i32) {
 			"Tower Shield" => tower_shield(ecs, x, y),
 			"Longsword" => longsword(ecs, x, y),
 			"Bear Trap" => bear_trap(ecs, x, y),
+			"Incendiary Mine" => incendiary_mine(ecs, x, y),
 			_ => {}
 		}
 	}
@@ -271,6 +272,25 @@ fn bear_trap(ecs: &mut World, x: i32, y: i32) {
 		.build();
 }
 
+fn incendiary_mine(ecs: &mut World, x: i32, y: i32) {
+	ecs.create_entity()
+		.with(Position{ x, y })
+		.with(Renderable{
+			glyph: rltk::to_cp437('^'),
+			fg: RGB::named(rltk::RED),
+			bg: RGB::named(rltk::BLACK),
+			render_order: 2
+		})
+		.with(Name{ name : "Incendiary Mine".to_string() })
+		.with(Hidden{})
+		.with(EntryTrigger{})
+		.with(InflictsDamage{damage: 8})
+		.with(AreaOfEffect{radius:3})
+		.with(SingleActivation{})
+		.marked::<SimpleMarker<SerializeMe>>()
+		.build();
+}
+
 fn room_table(map_depth: i32) -> RandomTable {
 	RandomTable::new()
 		.add("Goblin", 10)
@@ -285,4 +305,5 @@ fn room_table(map_depth: i32) -> RandomTable {
 		.add("Tower Shield", map_depth - 1)
 		.add("Magic Mapping Scroll", 2)
 		.add("Bear Trap", 2)
+		.add("Incendiary Mine", 1 + map_depth)
 }
