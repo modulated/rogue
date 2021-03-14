@@ -1,9 +1,7 @@
-use super::{MapBuilder, Map, Rect, apply_room_to_map, TileType, Position, spawner, SHOW_MAPGEN_VISUALIZER};
+use super::{MapBuilder, Map, TileType, Position, spawner, SHOW_MAPGEN_VISUALIZER};
 use rltk::RandomNumberGenerator;
 use specs::prelude::*;
 use std::collections::HashMap;
-
-const MIN_ROOM_SIZE: i32 = 8;
 
 pub struct CellularAutomataBuilder {
 	map: Map,
@@ -144,6 +142,7 @@ impl MapBuilder for CellularAutomataBuilder {
 	}
 }
 
+#[allow(dead_code)]
 impl CellularAutomataBuilder {
 	pub fn new(new_depth: i32) -> CellularAutomataBuilder {
 		CellularAutomataBuilder {

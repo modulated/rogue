@@ -47,8 +47,8 @@ impl MapBuilder for BspDungeonBuilder {
 	}
 }
 
+#[allow(dead_code)]
 impl BspDungeonBuilder {
-	#[allow(dead_code)]
 	pub fn new(new_depth: i32) -> BspDungeonBuilder {
 		BspDungeonBuilder {
 			map: Map::new(new_depth),
