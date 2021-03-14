@@ -254,8 +254,9 @@ impl GameState for State {
 				ctx.cls();
 				draw_map(&self.mapgen_history[self.mapgen_index], ctx);
 
+				let frametime: f32 = 5000.0/(self.mapgen_history.len() as f32);
 				self.mapgen_timer += ctx.frame_time_ms;
-				if self.mapgen_timer > 300.0 {
+				if self.mapgen_timer > frametime {
 					self.mapgen_timer = 0.0;
 					self.mapgen_index += 1;
 					if self.mapgen_index >= self.mapgen_history.len() {
@@ -410,8 +411,7 @@ impl GameState for State {
 fn main() -> rltk::BError {
 	use rltk::RltkBuilder;
 	let mut context = RltkBuilder::simple80x50()
-		.with_title("Rogue")
-		.with_fps_cap(24.0)
+		.with_title("Rogue")		
 		.with_dimensions(160, 100)		
 		.build()?;
 	context.with_post_scanlines(true);
