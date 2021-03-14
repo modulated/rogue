@@ -47,6 +47,7 @@ impl MapBuilder for SimpleMapBuilder {
 	}
 }
 
+#[allow(dead_code)]
 impl SimpleMapBuilder {
 	pub fn new(new_depth: i32) -> SimpleMapBuilder {
 		SimpleMapBuilder {
