@@ -23,12 +23,15 @@ use maze::MazeBuilder;
 mod dla;
 #[allow(unused_imports)]
 use dla::DLABuilder;
+mod voronoi;
+#[allow(unused_imports)]
+use voronoi::VoronoiBuilder;
 
 pub trait MapBuilder {
 	fn build_map(&mut self);
 	fn spawn_entities(&mut self, ecs: &mut World);
-	fn get_map(&mut self) -> Map;
-	fn get_starting_position(&mut self) -> Position;
+	fn get_map(&self) -> Map;
+	fn get_starting_position(&self) -> Position;
 	fn get_snapshot_history(&self) -> Vec<Map>;
 	fn take_snapshot(&mut self);
 }
@@ -50,6 +53,8 @@ pub fn random_builder(new_depth: i32) -> Box<dyn MapBuilder> {
 		11 => Box::new(DLABuilder::walk_outwards(new_depth)),
 		12 => Box::new(DLABuilder::central_attractor(new_depth)),
 		13 => Box::new(DLABuilder::insectoid(new_depth)),
+		14 => Box::new(VoronoiBuilder::pythagoras(new_depth)),
+		15 => Box::new(VoronoiBuilder::manhattan(new_depth)),
 		_ => Box::new(SimpleMapBuilder::new(new_depth))
 	}
 	// Box::new(DLABuilder::new(new_depth))
