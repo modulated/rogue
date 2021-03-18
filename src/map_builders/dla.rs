@@ -3,6 +3,7 @@ use rltk::RandomNumberGenerator;
 use specs::prelude::*;
 use std::collections::HashMap;
 
+#[allow(dead_code)]
 #[derive(PartialEq, Copy, Clone)]
 pub enum DLAAlgorithm { WalkInwards, WalkOutwards, CentralAttractor }
 
@@ -161,7 +162,7 @@ impl DLABuilder {
 	
 	
 
-
+	#[allow(dead_code)]
 	pub fn walk_inwards(new_depth : i32) -> DLABuilder {
 		DLABuilder{
 			map : Map::new(new_depth),
@@ -175,7 +176,8 @@ impl DLABuilder {
 			floor_percent: 0.25
 		}
 	}
-	
+
+	#[allow(dead_code)]
 	pub fn walk_outwards(new_depth : i32) -> DLABuilder {
 		DLABuilder{
 			map : Map::new(new_depth),
@@ -190,6 +192,7 @@ impl DLABuilder {
 		}
 	}
 	
+	#[allow(dead_code)]
 	pub fn central_attractor(new_depth : i32) -> DLABuilder {
 		DLABuilder{
 			map : Map::new(new_depth),
@@ -204,6 +207,7 @@ impl DLABuilder {
 		}
 	}
 	
+	#[allow(dead_code)]
 	pub fn insectoid(new_depth : i32) -> DLABuilder {
 		DLABuilder{
 			map : Map::new(new_depth),

@@ -218,6 +218,7 @@ impl MapBuilder for MazeBuilder {
 }
 
 impl MazeBuilder {
+	#[allow(dead_code)]
 	pub fn new(new_depth : i32) -> MazeBuilder {
 		MazeBuilder{
 			map : Map::new(new_depth),

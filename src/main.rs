@@ -21,6 +21,7 @@ pub use random_table::RandomTable;
 mod saveload_system;
 pub use saveload_system::{save_game};
 pub mod map_builders;
+pub mod rex_assets;
 
 // Systems
 mod visibility_system;
@@ -433,7 +434,7 @@ fn main() -> rltk::BError {
 	gs.ecs.insert(player_entity);
 	gs.ecs.insert(RunState::MapGeneration);
 	gs.ecs.insert(gamelog::GameLog{ entries: vec!["Welcome to Rogue.".to_string()]});
-
+	gs.ecs.insert(rex_assets::RexAssets::new());
 	gs.generate_world_map(1);
 
 
