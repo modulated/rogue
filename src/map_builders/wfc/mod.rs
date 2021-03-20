@@ -2,8 +2,6 @@ use super::{Map, MapBuilder, spawner, Position, SHOW_MAPGEN_VISUALIZER, generate
 use std::collections::HashMap;
 use rltk::RandomNumberGenerator;
 use specs::prelude::*;
-mod image_loader;
-use image_loader::load_rex_map;
 mod constraints;
 use constraints::*;
 mod common;
@@ -11,16 +9,12 @@ use common::*;
 mod solver;
 use solver::Solver;
 
-#[derive(PartialEq, Copy, Clone)]
-pub enum WaveformMode { TestMap, Derived }
-
 pub struct WFCBuilder {
 	map: Map,
 	starting_position: Position,
 	depth: i32,
 	history: Vec<Map>,
 	noise_areas: HashMap<i32, Vec<usize>>,
-	mode: WaveformMode,
 	derive_from: Option<Box<dyn MapBuilder>>
 }
 
@@ -59,14 +53,13 @@ impl MapBuilder for WFCBuilder {
 }
 
 impl WFCBuilder {
-	pub fn new(new_depth: i32, mode: WaveformMode, derive_from: Option<Box<dyn MapBuilder>>) -> WFCBuilder {
+	pub fn new(new_depth: i32, derive_from: Option<Box<dyn MapBuilder>>) -> WFCBuilder {
 		WFCBuilder {
 			map: Map::new(new_depth),
 			starting_position: Position{ x: 0, y: 0 },
 			depth : new_depth,
 			history: Vec::new(),
 			noise_areas : HashMap::new(),
-			mode,
 			derive_from
 		}
 	}
@@ -74,11 +67,6 @@ impl WFCBuilder {
 	fn build(&mut self) {
 		let mut rng = RandomNumberGenerator::new();
 		const CHUNK_SIZE: i32 = 8;
-		
-		if self.mode == WaveformMode::TestMap {
-			self.map = load_rex_map(self.depth, &rltk::rex::XpFile::from_resource("../resources/wfc-demo1.xp").unwrap());
-			self.take_snapshot();
-		}
 		
 		let prebuilder = &mut self.derive_from.as_mut().unwrap();
 		prebuilder.build_map();
@@ -118,12 +106,8 @@ impl WFCBuilder {
 		self.take_snapshot();
 	}
 
-	pub fn test_map(new_depth: i32) -> WFCBuilder {
-		WFCBuilder::new(new_depth, WaveformMode::TestMap, None)
-	}
-
 	pub fn derived_map(new_depth: i32, builder: Box<dyn MapBuilder>) -> WFCBuilder {
-		WFCBuilder::new(new_depth, WaveformMode::Derived, Some(builder))
+		WFCBuilder::new(new_depth, Some(builder))
 	}
 
 	fn render_tile_gallery(&mut self, constraints: &Vec<MapChunk>, chunk_size: i32) {

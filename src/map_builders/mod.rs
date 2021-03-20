@@ -58,7 +58,6 @@ pub fn random_builder(new_depth: i32) -> Box<dyn MapBuilder> {
 		13 => { result = Box::new(DLABuilder::insectoid(new_depth)); }
 		14 => { result = Box::new(VoronoiBuilder::pythagoras(new_depth)); }
 		15 => { result = Box::new(VoronoiBuilder::manhattan(new_depth)); }
-		16 => { result = Box::new(WFCBuilder::test_map(new_depth)); }
 		_ => { result = Box::new(SimpleMapBuilder::new(new_depth)); }
 	}
 
