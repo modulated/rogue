@@ -53,6 +53,7 @@ impl MapBuilder for WFCBuilder {
 }
 
 impl WFCBuilder {
+	#[allow(dead_code)]
 	pub fn new(new_depth: i32, derive_from: Option<Box<dyn MapBuilder>>) -> WFCBuilder {
 		WFCBuilder {
 			map: Map::new(new_depth),
@@ -106,6 +107,7 @@ impl WFCBuilder {
 		self.take_snapshot();
 	}
 
+	#[allow(dead_code)]
 	pub fn derived_map(new_depth: i32, builder: Box<dyn MapBuilder>) -> WFCBuilder {
 		WFCBuilder::new(new_depth, Some(builder))
 	}

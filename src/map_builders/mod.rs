@@ -27,7 +27,11 @@ mod voronoi;
 #[allow(unused_imports)]
 use voronoi::VoronoiBuilder;
 mod wfc;
+#[allow(unused_imports)]
 use wfc::WFCBuilder;
+mod skeletal_builder;
+#[allow(unused_imports)]
+use skeletal_builder::PrefabBuilder;
 
 pub trait MapBuilder {
 	fn build_map(&mut self);
@@ -39,31 +43,33 @@ pub trait MapBuilder {
 }
 
 pub fn random_builder(new_depth: i32) -> Box<dyn MapBuilder> {
-	let mut rng = rltk::RandomNumberGenerator::new();
-	let builder = rng.roll_dice(1, 17);
-	let mut result : Box<dyn MapBuilder>;
-	match builder {
-		1 => { result = Box::new(BspDungeonBuilder::new(new_depth)); }
-		2 => { result = Box::new(BspInteriorBuilder::new(new_depth)); }
-		3 => { result = Box::new(CellularAutomataBuilder::new(new_depth)); }
-		4 => { result = Box::new(DrunkardsWalkBuilder::open_area(new_depth)); }
-		5 => { result = Box::new(DrunkardsWalkBuilder::open_halls(new_depth)); }
-		6 => { result = Box::new(DrunkardsWalkBuilder::winding_passages(new_depth)); }
-		7 => { result = Box::new(DrunkardsWalkBuilder::fat_passages(new_depth)); }
-		8 => { result = Box::new(DrunkardsWalkBuilder::fearful_symmetry(new_depth)); }
-		9 => { result = Box::new(MazeBuilder::new(new_depth)); }
-		10 => { result = Box::new(DLABuilder::walk_inwards(new_depth)); }
-		11 => { result = Box::new(DLABuilder::walk_outwards(new_depth)); }
-		12 => { result = Box::new(DLABuilder::central_attractor(new_depth)); }
-		13 => { result = Box::new(DLABuilder::insectoid(new_depth)); }
-		14 => { result = Box::new(VoronoiBuilder::pythagoras(new_depth)); }
-		15 => { result = Box::new(VoronoiBuilder::manhattan(new_depth)); }
-		_ => { result = Box::new(SimpleMapBuilder::new(new_depth)); }
-	}
+	// let mut rng = rltk::RandomNumberGenerator::new();
+	// let builder = rng.roll_dice(1, 17);
+	// let mut result : Box<dyn MapBuilder>;
+	// match builder {
+	// 	1 => { result = Box::new(BspDungeonBuilder::new(new_depth)); }
+	// 	2 => { result = Box::new(BspInteriorBuilder::new(new_depth)); }
+	// 	3 => { result = Box::new(CellularAutomataBuilder::new(new_depth)); }
+	// 	4 => { result = Box::new(DrunkardsWalkBuilder::open_area(new_depth)); }
+	// 	5 => { result = Box::new(DrunkardsWalkBuilder::open_halls(new_depth)); }
+	// 	6 => { result = Box::new(DrunkardsWalkBuilder::winding_passages(new_depth)); }
+	// 	7 => { result = Box::new(DrunkardsWalkBuilder::fat_passages(new_depth)); }
+	// 	8 => { result = Box::new(DrunkardsWalkBuilder::fearful_symmetry(new_depth)); }
+	// 	9 => { result = Box::new(MazeBuilder::new(new_depth)); }
+	// 	10 => { result = Box::new(DLABuilder::walk_inwards(new_depth)); }
+	// 	11 => { result = Box::new(DLABuilder::walk_outwards(new_depth)); }
+	// 	12 => { result = Box::new(DLABuilder::central_attractor(new_depth)); }
+	// 	13 => { result = Box::new(DLABuilder::insectoid(new_depth)); }
+	// 	14 => { result = Box::new(VoronoiBuilder::pythagoras(new_depth)); }
+	// 	15 => { result = Box::new(VoronoiBuilder::manhattan(new_depth)); }
+	// 	_ => { result = Box::new(SimpleMapBuilder::new(new_depth)); }
+	// }
 
-	if rng.roll_dice(1, 3)==1 {
-		result = Box::new(WFCBuilder::derived_map(new_depth, result));
-	}
+	// if rng.roll_dice(1, 3)==1 {
+	// 	result = Box::new(WFCBuilder::derived_map(new_depth, result));
+	// }
 
-	result
+	// result
+
+	Box::new(PrefabBuilder::new(new_depth))
 }
