@@ -1,6 +1,5 @@
 use super::{MapBuilder, Map, TileType, Position, spawner, SHOW_MAPGEN_VISUALIZER, remove_unreachable_areas_returning_most_distant, generate_voronoi_spawn_regions, Symmetry, paint};
 use rltk::RandomNumberGenerator;
-use specs::prelude::*;
 use std::collections::HashMap;
 
 #[allow(dead_code)]
@@ -13,6 +12,7 @@ pub struct DLABuilder {
 	depth: i32,
 	history: Vec<Map>,
 	noise_areas: HashMap<i32, Vec<usize>>,
+	spawn_list: Vec<(usize, String)>,
 	algorithm: DLAAlgorithm,
 	brush_size: i32,
 	symmetry: Symmetry,
@@ -32,14 +32,12 @@ impl MapBuilder for DLABuilder {
 		self.history.clone()
 	}
 
-	fn build_map(&mut self) {
-		self.build();
+	fn get_spawn_list(&self) -> &Vec<(usize, String)> {
+		&self.spawn_list
 	}
 
-	fn spawn_entities(&mut self, ecs: &mut World) {
-		for area in self.noise_areas.iter() {
-			spawner::spawn_region(ecs, area.1, self.depth);
-		}
+	fn build_map(&mut self) {
+		self.build();
 	}
 
 	fn take_snapshot(&mut self) {
@@ -62,6 +60,7 @@ impl DLABuilder {
 			depth : new_depth,
 			history: Vec::new(),
 			noise_areas : HashMap::new(),
+			spawn_list: Vec::new(),
 			algorithm: DLAAlgorithm::WalkInwards,
 			brush_size: 2,
 			symmetry: Symmetry::None,
@@ -157,6 +156,10 @@ impl DLABuilder {
 		let exit_tile = remove_unreachable_areas_returning_most_distant(&mut self.map, start_idx);
 		self.map.tiles[exit_tile] = TileType::DownStairs;
 		self.noise_areas = generate_voronoi_spawn_regions(&self.map, &mut rng);
+
+		for area in self.noise_areas.iter() {
+			spawner::spawn_region(&self.map, &mut rng, area.1, self.depth, &mut self.spawn_list);
+		}
 	}
 
 	
@@ -170,6 +173,7 @@ impl DLABuilder {
 			depth : new_depth,
 			history: Vec::new(),
 			noise_areas : HashMap::new(),
+			spawn_list: Vec::new(),
 			algorithm: DLAAlgorithm::WalkInwards,
 			brush_size: 1,
 			symmetry: Symmetry::None,
@@ -185,6 +189,7 @@ impl DLABuilder {
 			depth : new_depth,
 			history: Vec::new(),
 			noise_areas : HashMap::new(),
+			spawn_list: Vec::new(),
 			algorithm: DLAAlgorithm::WalkOutwards,
 			brush_size: 2,
 			symmetry: Symmetry::None,
@@ -200,6 +205,7 @@ impl DLABuilder {
 			depth : new_depth,
 			history: Vec::new(),
 			noise_areas : HashMap::new(),
+			spawn_list: Vec::new(),
 			algorithm: DLAAlgorithm::CentralAttractor,
 			brush_size: 2,
 			symmetry: Symmetry::None,
@@ -215,6 +221,7 @@ impl DLABuilder {
 			depth : new_depth,
 			history: Vec::new(),
 			noise_areas : HashMap::new(),
+			spawn_list: Vec::new(),
 			algorithm: DLAAlgorithm::CentralAttractor,
 			brush_size: 2,
 			symmetry: Symmetry::Horizontal,

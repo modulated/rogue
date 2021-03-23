@@ -1,7 +1,6 @@
 use super::{Map, MapBuilder, spawner, Position, SHOW_MAPGEN_VISUALIZER, generate_voronoi_spawn_regions, remove_unreachable_areas_returning_most_distant, TileType};
 use std::collections::HashMap;
 use rltk::RandomNumberGenerator;
-use specs::prelude::*;
 mod constraints;
 use constraints::*;
 mod common;
@@ -15,6 +14,7 @@ pub struct WFCBuilder {
 	depth: i32,
 	history: Vec<Map>,
 	noise_areas: HashMap<i32, Vec<usize>>,
+	spawn_list: Vec<(usize, String)>,
 	derive_from: Option<Box<dyn MapBuilder>>
 }
 
@@ -31,14 +31,12 @@ impl MapBuilder for WFCBuilder {
 		self.history.clone()
 	}
 
-	fn build_map(&mut self) {
-		self.build();
+	fn get_spawn_list(&self) -> &Vec<(usize, String)> {
+		&self.spawn_list
 	}
 
-	fn spawn_entities(&mut self, ecs: &mut World) {
-		for area in self.noise_areas.iter() {
-			spawner::spawn_region(ecs, area.1, self.depth);
-		}
+	fn build_map(&mut self) {
+		self.build();
 	}
 
 	fn take_snapshot(&mut self) {
@@ -61,6 +59,7 @@ impl WFCBuilder {
 			depth : new_depth,
 			history: Vec::new(),
 			noise_areas : HashMap::new(),
+			spawn_list: Vec::new(),
 			derive_from
 		}
 	}
@@ -105,6 +104,9 @@ impl WFCBuilder {
 		self.map.tiles[exit_tile] = TileType::DownStairs;
 		self.noise_areas = generate_voronoi_spawn_regions(&self.map, &mut rng);
 		self.take_snapshot();
+		for area in self.noise_areas.iter() {
+			spawner::spawn_region(&self.map, &mut rng, area.1, self.depth, &mut self.spawn_list);
+		}
 	}
 
 	#[allow(dead_code)]

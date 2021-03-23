@@ -1,6 +1,5 @@
 use super::{MapBuilder, Map, TileType, Position, spawner, SHOW_MAPGEN_VISUALIZER, remove_unreachable_areas_returning_most_distant, generate_voronoi_spawn_regions, Symmetry, paint};
 use rltk::RandomNumberGenerator;
-use specs::prelude::*;
 use std::collections::HashMap;
 
 pub struct DrunkardsWalkBuilder {
@@ -9,6 +8,7 @@ pub struct DrunkardsWalkBuilder {
 	depth: i32,
 	history: Vec<Map>,
 	noise_areas: HashMap<i32, Vec<usize>>,
+	spawn_list: Vec<(usize, String)>,
 	settings: DrunkardSettings
 }
 
@@ -36,14 +36,12 @@ impl MapBuilder for DrunkardsWalkBuilder {
 		self.history.clone()
 	}
 
-	fn build_map(&mut self) {
-		self.build();
+	fn get_spawn_list(&self) -> &Vec<(usize, String)> {
+		&self.spawn_list
 	}
 
-	fn spawn_entities(&mut self, ecs: &mut World) {
-		for area in self.noise_areas.iter() {
-			spawner::spawn_region(ecs, area.1, self.depth);
-		}
+	fn build_map(&mut self) {
+		self.build();
 	}
 
 	fn take_snapshot(&mut self) {
@@ -66,6 +64,7 @@ impl DrunkardsWalkBuilder {
 			depth: new_depth,
 			history: Vec::new(),
 			noise_areas: HashMap::new(),
+			spawn_list: Vec::new(),
 			settings: settings
 		}
 	}
@@ -77,6 +76,7 @@ impl DrunkardsWalkBuilder {
 			depth: new_depth,
 			history: Vec::new(),
 			noise_areas: HashMap::new(),
+			spawn_list: Vec::new(),
 			settings: DrunkardSettings {
 				spawn_mode: DrunkSpawnMode::StartingPoint,
 				lifetime: 400,
@@ -94,6 +94,7 @@ impl DrunkardsWalkBuilder {
 			depth: new_depth,
 			history: Vec::new(),
 			noise_areas: HashMap::new(),
+			spawn_list: Vec::new(),
 			settings: DrunkardSettings {
 				spawn_mode: DrunkSpawnMode::Random,
 				lifetime: 400,
@@ -111,6 +112,7 @@ impl DrunkardsWalkBuilder {
 			depth: new_depth,
 			history: Vec::new(),
 			noise_areas: HashMap::new(),
+			spawn_list: Vec::new(),
 			settings: DrunkardSettings {
 				spawn_mode: DrunkSpawnMode::Random,
 				lifetime: 100,
@@ -128,6 +130,7 @@ impl DrunkardsWalkBuilder {
 			depth : new_depth,
 			history: Vec::new(),
 			noise_areas : HashMap::new(),
+			spawn_list: Vec::new(),
 			settings : DrunkardSettings{
 				spawn_mode: DrunkSpawnMode::Random,
 				lifetime: 100,
@@ -145,6 +148,7 @@ impl DrunkardsWalkBuilder {
 			depth : new_depth,
 			history: Vec::new(),
 			noise_areas : HashMap::new(),
+			spawn_list: Vec::new(),
 			settings : DrunkardSettings{
 				spawn_mode: DrunkSpawnMode::Random,
 				lifetime: 100,
@@ -231,6 +235,10 @@ impl DrunkardsWalkBuilder {
 		self.take_snapshot();
 		
 		// Noise map for entity spawning
-		self.noise_areas = generate_voronoi_spawn_regions(&self.map, &mut rng)
+		self.noise_areas = generate_voronoi_spawn_regions(&self.map, &mut rng);
+
+		for area in self.noise_areas.iter() {
+			spawner::spawn_region(&self.map, &mut rng, area.1, self.depth, &mut self.spawn_list);
+		}
 	}
 }
