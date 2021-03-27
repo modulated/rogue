@@ -22,5 +22,6 @@ const TRAP_MAP: &str = "
      
  ^^^ 
  ^!^ 
+ ^^^ 
      
 ";

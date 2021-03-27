@@ -172,7 +172,7 @@ impl PrefabBuilder {
 		}
 
 		// Build the map
-		self.apply_previous_iteration(|x, y, e| {
+		self.apply_previous_iteration(|x, y, _e| {
 			x < chunk_x || x > (chunk_x + section.width as i32) || y < chunk_y || y > (chunk_y + section.height as i32)
 		});
 
