@@ -29,6 +29,34 @@ impl MapBuilder for CellularAutomataBuilder {
 	}
 
 	fn build_map(&mut self) {
+		self.build();
+	}
+
+	fn take_snapshot(&mut self) {
+		if SHOW_MAPGEN_VISUALIZER {
+			let mut snapshot = self.map.clone();
+			for v in snapshot.revealed_tiles.iter_mut() {
+				*v = true;
+			}
+			self.history.push(snapshot);
+		}
+	}
+}
+
+#[allow(dead_code)]
+impl CellularAutomataBuilder {
+	pub fn new(new_depth: i32) -> CellularAutomataBuilder {
+		CellularAutomataBuilder {
+			map: Map::new(new_depth),
+			starting_position: Position {x: 0, y: 0},
+			depth: new_depth,
+			history: Vec::new(),
+			noise_areas: HashMap::new(),
+			spawn_list: Vec::new()
+		}
+	}
+
+	fn build(&mut self) {
 		let mut rng = RandomNumberGenerator::new();
 
 		// Randomise the map - 55% to be filled
@@ -92,30 +120,6 @@ impl MapBuilder for CellularAutomataBuilder {
 
 		for area in self.noise_areas.iter() {
 			spawner::spawn_region(&self.map, &mut rng, area.1, self.depth, &mut self.spawn_list);
-		}
-	}
-
-	fn take_snapshot(&mut self) {
-		if SHOW_MAPGEN_VISUALIZER {
-			let mut snapshot = self.map.clone();
-			for v in snapshot.revealed_tiles.iter_mut() {
-				*v = true;
-			}
-			self.history.push(snapshot);
-		}
-	}
-}
-
-#[allow(dead_code)]
-impl CellularAutomataBuilder {
-	pub fn new(new_depth: i32) -> CellularAutomataBuilder {
-		CellularAutomataBuilder {
-			map: Map::new(new_depth),
-			starting_position: Position {x: 0, y: 0},
-			depth: new_depth,
-			history: Vec::new(),
-			noise_areas: HashMap::new(),
-			spawn_list: Vec::new()
 		}
 	}
 }
