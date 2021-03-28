@@ -6,3 +6,5 @@ Roguelike written in rust.
 - [ ] XP system
 - [ ] Fix internal BSP item placement
 - [ ] Map builder chaining
+- [ ] Main menu crash
+- [ ] Start positioning
