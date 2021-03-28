@@ -5,3 +5,4 @@ Roguelike written in rust.
 - [ ] module for state machine
 - [ ] XP system
 - [ ] Fix internal BSP item placement
+- [ ] Map builder chaining

@@ -1,4 +1,4 @@
-use super::{MapChunk, Map};
+use super::{MapChunk, Map, Rng};
 use std::collections::HashSet;
 
 pub struct Solver {
@@ -80,7 +80,7 @@ impl Solver {
 		neighbors
 	}
 
-	pub fn iteration(&mut self, map: &mut Map, rng : &mut super::RandomNumberGenerator) -> bool {
+	pub fn iteration(&mut self, map: &mut Map, rng : &mut Rng) -> bool {
 		if self.remaining.is_empty() { return true; }
 
 		// Populate the neighbor count of the remaining list

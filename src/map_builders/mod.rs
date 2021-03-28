@@ -25,7 +25,7 @@ mod dla;
 use dla::DLABuilder;
 mod voronoi;
 #[allow(unused_imports)]
-use voronoi::VoronoiBuilder;
+use voronoi::VoronoiCellBuilder;
 mod wfc;
 #[allow(unused_imports)]
 use wfc::WFCBuilder;
@@ -33,11 +33,26 @@ mod prefab_builder;
 #[allow(unused_imports)]
 use prefab_builder::PrefabBuilder;
 mod room_based_spawner;
+#[allow(unused_imports)]
 use room_based_spawner::RoomBasedSpawner;
 mod room_based_stairs;
+#[allow(unused_imports)]
 use room_based_stairs::RoomBasedStairs;
 mod room_based_starting_position;
+#[allow(unused_imports)]
 use room_based_starting_position::RoomBasedStartingPosition;
+mod area_starting_points;
+#[allow(unused_imports)]
+use area_starting_points::{AreaStartingPosition, XStart, YStart};
+mod cull_unreachable;
+#[allow(unused_imports)]
+use cull_unreachable::CullUnreachable;
+mod voronoi_spawning;
+#[allow(unused_imports)]
+use voronoi_spawning::VoronoiSpawning;
+mod distant_exit;
+#[allow(unused_imports)]
+use distant_exit::DistantExit;
 
 pub struct BuilderMap {
 	pub spawn_list: Vec<(usize, String)>,
@@ -111,21 +126,6 @@ impl BuilderChain {
 	}
 }
 
-pub trait MapBuilder {
-	fn build_map(&mut self);
-	fn get_map(&self) -> Map;
-	fn get_starting_position(&self) -> Position;
-	fn get_snapshot_history(&self) -> Vec<Map>;
-	fn take_snapshot(&mut self);
-	fn get_spawn_list(&self) -> &Vec<(usize, String)>;	
-
-	fn spawn_entities(&mut self, ecs: &mut World) {
-		for entity in self.get_spawn_list().iter() {
-			spawn_entity(ecs, &(&entity.0, &entity.1));
-		}
-	}
-}
-
 pub trait InitialMapBuilder {
 	fn build_map(&mut self, rng: &mut rltk::RandomNumberGenerator, build_data: &mut BuilderMap);
 }
@@ -134,11 +134,55 @@ pub trait MetaMapBuilder {
 	fn build_map(&mut self, rng: &mut rltk::RandomNumberGenerator, build_data: &mut BuilderMap);
 }
 
-pub fn random_builder(new_depth: i32, _rng: &mut rltk::RandomNumberGenerator) -> BuilderChain {
+pub fn random_builder(new_depth: i32, rng: &mut rltk::RandomNumberGenerator) -> BuilderChain {
 	let mut builder = BuilderChain::new(new_depth);
-	builder.start_with(BspDungeonBuilder::new());
-	builder.with(RoomBasedSpawner::new());
-	builder.with(RoomBasedStartingPosition::new());
-	builder.with(RoomBasedStairs::new());
+	let (random_starter, has_rooms) = random_initial_builder(rng);
+	builder.start_with(random_starter);
+	if has_rooms {
+		builder.with(RoomBasedSpawner::new());
+		builder.with(RoomBasedStairs::new());
+		builder.with(RoomBasedStartingPosition::new());
+	} else {
+		builder.with(AreaStartingPosition::new(XStart::Center, YStart::Center));
+		builder.with(CullUnreachable::new());
+		builder.with(VoronoiSpawning::new());
+		builder.with(DistantExit::new());
+	}
+
+	if rng.roll_dice(1, 3)==1 {
+		builder.with(WFCBuilder::new());
+	}
+
+	if rng.roll_dice(1, 20)==1 {
+		builder.with(PrefabBuilder::sectional(prefab_builder::prefab_sections::UNDERGROUND_FORT));
+	}
+
+	builder.with(PrefabBuilder::vaults());
+
 	builder
+}
+
+fn random_initial_builder(rng: &mut rltk::RandomNumberGenerator) -> (Box<dyn InitialMapBuilder>, bool) {
+	let builder = rng.roll_dice(1, 17);
+	let result : (Box<dyn InitialMapBuilder>, bool);
+	match builder {
+		1 => result = (BspDungeonBuilder::new(), true),
+		2 => result = (BspInteriorBuilder::new(), true),
+		3 => result = (CellularAutomataBuilder::new(), false),
+		4 => result = (DrunkardsWalkBuilder::open_area(), false),
+		5 => result = (DrunkardsWalkBuilder::open_halls(), false),
+		6 => result = (DrunkardsWalkBuilder::winding_passages(), false),
+		7 => result = (DrunkardsWalkBuilder::fat_passages(), false),
+		8 => result = (DrunkardsWalkBuilder::fearful_symmetry(), false),
+		9 => result = (MazeBuilder::new(), false),
+		10 => result = (DLABuilder::walk_inwards(), false),
+		11 => result = (DLABuilder::walk_outwards(), false),
+		12 => result = (DLABuilder::central_attractor(), false),
+		13 => result = (DLABuilder::insectoid(), false),
+		14 => result = (VoronoiCellBuilder::pythagoras(), false),
+		15 => result = (VoronoiCellBuilder::manhattan(), false),
+		16 => result = (PrefabBuilder::constant(prefab_builder::prefab_level::WFC_POPULATED), false),
+		_ => result = (SimpleMapBuilder::new(), true)
+	}
+	result
 }

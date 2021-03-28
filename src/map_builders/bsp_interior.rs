@@ -1,4 +1,4 @@
-use super::{InitialMapBuilder, BuilderMap, Rect, TileType, Position};
+use super::{InitialMapBuilder, BuilderMap, Rect, TileType, draw_corridor};
 use rltk::RandomNumberGenerator as Rng;
 
 const MIN_ROOM_SIZE: i32 = 8;
@@ -28,10 +28,10 @@ impl BspInteriorBuilder {
 		self.rects.clear();
 		self.rects.push(Rect::new(1, 1, build_data.map.width - 2, build_data.map.height - 2));
 		let first_room = self.rects[0];
-		self.add_subrects(first_room, &mut rng);
+		self.add_subrects(first_room, rng);
 
-		let rooms = self.rects.clone();
-		for r in rooms.iter() {
+		let rooms_copy = self.rects.clone();
+		for r in rooms_copy.iter() {
 			let room = *r;
 			rooms.push(room);
 			for y in room.y1 .. room.y2 {
@@ -52,23 +52,14 @@ impl BspInteriorBuilder {
 			let start_y = room.y1 + (rng.roll_dice(1, i32::abs(room.y1 - room.y2))-1);
 			let end_x = next_room.x1 + (rng.roll_dice(1, i32::abs(next_room.x1 - next_room.x2))-1);
 			let end_y = next_room.y1 + (rng.roll_dice(1, i32::abs(next_room.y1 - next_room.y2))-1);
-			self.draw_corridor(start_x, start_y, end_x, end_y);
+			draw_corridor(&mut build_data.map, start_x, start_y, end_x, end_y);
 			build_data.take_snapshot();
 		}
 
-		let start = self.rooms[0].center();
-		self.starting_position = Position { x: start.0, y: start.1 };
-
-		let stairs = self.rooms[self.rooms.len() - 1].center();
-		let stairs_idx = self.map.xy_idx(stairs.0, stairs.1);
-		self.map.tiles[stairs_idx] = TileType::DownStairs;
-
-		for room in self.rooms.iter().skip(1) {
-			spawn_room(&self.map, &mut rng, room, self.depth, &mut self.spawn_list);
-		}
+		build_data.rooms = Some(rooms);
 	}
 
-	fn add_subrects(&mut self, rect: Rect, rng: &mut RandomNumberGenerator) {
+	fn add_subrects(&mut self, rect: Rect, rng: &mut Rng) {
 		if !self.rects.is_empty() {
 			self.rects.remove(self.rects.len() - 1);
 		}
@@ -80,8 +71,6 @@ impl BspInteriorBuilder {
 		let half_height = height / 2;
 
 		let split = rng.roll_dice(1, 4);
-
-		const MIN_ROOM_SIZE: i32 = 5;
 
 		if split <= 2 {
 			// Horizontal split
@@ -102,26 +91,4 @@ impl BspInteriorBuilder {
 		}
 		
 	}
-
-	fn draw_corridor(&mut self, x1:i32, y1:i32, x2:i32, y2:i32) {
-		let mut x = x1;
-		let mut y = y1;
-	
-		while x != x2 || y != y2 {
-			if x < x2 {
-				x += 1;
-			} else if x > x2 {
-				x -= 1;
-			} else if y < y2 {
-				y += 1;
-			} else if y > y2 {
-				y -= 1;
-			}
-	
-			let idx = self.map.xy_idx(x, y);
-			self.map.tiles[idx] = TileType::Floor;
-		}
-	}
-	
-
 }
