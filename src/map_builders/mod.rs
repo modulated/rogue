@@ -56,6 +56,9 @@ use distant_exit::DistantExit;
 mod room_eroder;
 #[allow(unused_imports)]
 use room_eroder::RoomEroder;
+mod room_rounder;
+#[allow(unused_imports)]
+use room_rounder::RoomRounder;
 
 pub struct BuilderMap {
 	pub spawn_list: Vec<(usize, String)>,
@@ -140,7 +143,7 @@ pub trait MetaMapBuilder {
 pub fn random_builder(new_depth: i32, _rng: &mut rltk::RandomNumberGenerator) -> BuilderChain {
 	let mut builder = BuilderChain::new(new_depth);
 	builder.start_with(BspDungeonBuilder::new());
-	builder.with(RoomEroder::new());
+	builder.with(RoomRounder::new());
 	builder.with(AreaStartingPosition::new(XStart::Center, YStart::Center));
 	builder.with(CullUnreachable::new());
 	builder.with(VoronoiSpawning::new());
