@@ -1,4 +1,4 @@
-use super::{Map, Rect, TileType, Position, spawner::spawn_entity, SHOW_MAPGEN_VISUALIZER};
+ use super::{Map, Rect, TileType, Position, spawner::spawn_entity, SHOW_MAPGEN_VISUALIZER};
 mod simple_map;
 #[allow(unused_imports)]
 use simple_map::SimpleMapBuilder;
@@ -189,32 +189,6 @@ fn random_start_position(rng: &mut rltk::RandomNumberGenerator) -> (XStart, YSta
 
     (x, y)
 }
-
-// #[allow(dead_code)]
-// fn random_initial_builder(rng: &mut rltk::RandomNumberGenerator) -> (Box<dyn InitialMapBuilder>, bool) {
-// 	let builder = rng.roll_dice(1, 17);
-// 	let result : (Box<dyn InitialMapBuilder>, bool);
-// 	match builder {
-// 		1 => result = (BspDungeonBuilder::new(), true),
-// 		2 => result = (BspInteriorBuilder::new(), true),
-// 		3 => result = (CellularAutomataBuilder::new(), false),
-// 		4 => result = (DrunkardsWalkBuilder::open_area(), false),
-// 		5 => result = (DrunkardsWalkBuilder::open_halls(), false),
-// 		6 => result = (DrunkardsWalkBuilder::winding_passages(), false),
-// 		7 => result = (DrunkardsWalkBuilder::fat_passages(), false),
-// 		8 => result = (DrunkardsWalkBuilder::fearful_symmetry(), false),
-// 		9 => result = (MazeBuilder::new(), false),
-// 		10 => result = (DLABuilder::walk_inwards(), false),
-// 		11 => result = (DLABuilder::walk_outwards(), false),
-// 		12 => result = (DLABuilder::central_attractor(), false),
-// 		13 => result = (DLABuilder::insectoid(), false),
-// 		14 => result = (VoronoiCellBuilder::pythagoras(), false),
-// 		15 => result = (VoronoiCellBuilder::manhattan(), false),
-// 		16 => result = (PrefabBuilder::constant(prefab_builder::prefab_level::WFC_POPULATED), false),
-// 		_ => result = (SimpleMapBuilder::new(), true)
-// 	}
-// 	result
-// }
 
 fn random_room_builder(rng: &mut rltk::RandomNumberGenerator, builder : &mut BuilderChain) {
 	let build_roll = rng.roll_dice(1, 3);
