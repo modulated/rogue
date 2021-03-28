@@ -1,4 +1,5 @@
 use rltk::{GameState, Rltk, Point};
+use rltk::RandomNumberGenerator as RNG;
 use saveload_system::delete_save;
 use specs::prelude::*;
 use specs::saveload::{SimpleMarkerAllocator};
@@ -98,15 +99,16 @@ impl State {
 		self.mapgen_index = 0;
 		self.mapgen_timer = 0.0;
 		self.mapgen_history.clear();
-
-		let mut builder = map_builders::random_builder(new_depth);
-		builder.build_map();
-		self.mapgen_history = builder.get_snapshot_history();
+		let mut rng = self.ecs.write_resource::<RNG>();
+		let mut builder = map_builders::random_builder(new_depth, &mut rng);
+		builder.build_map(&mut rng);
+		std::mem::drop(rng);
+		self.mapgen_history = builder.build_data.history.clone();
 		let player_start;
 		{
 			let mut worldmap_resource = self.ecs.write_resource::<Map>();
-			*worldmap_resource = builder.get_map();
-			player_start = builder.get_starting_position();
+			*worldmap_resource = builder.build_data.map.clone();
+			player_start = builder.build_data.starting_position.as_mut().unwrap().clone();
 		}
 
 		// Spawn bad guys
@@ -272,7 +274,7 @@ impl GameState for State {
 					MainMenuResult::NoSeleciton{selected} => newrunstate = RunState::MainMenu{ menu_selection: selected },
 					MainMenuResult::Selected{ selected } => {
 						match selected {
-							MainMenuSelection::NewGame => newrunstate = RunState::PreRun,
+							MainMenuSelection::NewGame => newrunstate = RunState::MapGeneration,
 							MainMenuSelection::LoadGame => {
 								saveload_system::load_game(&mut self.ecs);
 								newrunstate = RunState::AwaitingInput;
@@ -373,7 +375,7 @@ impl GameState for State {
 
 			RunState::NextLevel => {
 				self.goto_next_level();
-				newrunstate = RunState::PreRun;
+				newrunstate = RunState::MapGeneration;
 			}
 
 			RunState::GameOver => {
@@ -419,7 +421,7 @@ fn main() -> rltk::BError {
 
 	let mut gs = State {
 		ecs: World::new(),
-		mapgen_next_state: Some(RunState::MainMenu{ menu_selection: MainMenuSelection::NewGame }),
+		mapgen_next_state: Some(RunState::PreRun),
 		mapgen_index: 0,
 		mapgen_history: Vec::new(),
 		mapgen_timer: 0.0
@@ -429,7 +431,7 @@ fn main() -> rltk::BError {
 	gs.ecs.insert(SimpleMarkerAllocator::<SerializeMe>::new());
 	gs.ecs.insert(Map::new(1));
 	gs.ecs.insert(Point::new(0, 0));
-	gs.ecs.insert(rltk::RandomNumberGenerator::new());
+	gs.ecs.insert(RNG::new());
 	let player_entity = spawner::player(&mut gs.ecs, 0, 0);
 	gs.ecs.insert(player_entity);
 	gs.ecs.insert(RunState::MapGeneration);

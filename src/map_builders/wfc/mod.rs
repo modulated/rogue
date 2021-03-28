@@ -1,4 +1,4 @@
-use super::{Map, MapBuilder, spawner, Position, SHOW_MAPGEN_VISUALIZER, generate_voronoi_spawn_regions, remove_unreachable_areas_returning_most_distant, TileType};
+use super::{Map, MapBuilder, super::spawner::spawn_region, Position, SHOW_MAPGEN_VISUALIZER, generate_voronoi_spawn_regions, remove_unreachable_areas_returning_most_distant, TileType};
 use std::collections::HashMap;
 use rltk::RandomNumberGenerator;
 mod constraints;
@@ -105,7 +105,7 @@ impl WFCBuilder {
 		self.noise_areas = generate_voronoi_spawn_regions(&self.map, &mut rng);
 		self.take_snapshot();
 		for area in self.noise_areas.iter() {
-			spawner::spawn_region(&self.map, &mut rng, area.1, self.depth, &mut self.spawn_list);
+			spawn_region(&self.map, &mut rng, area.1, self.depth, &mut self.spawn_list);
 		}
 	}
 

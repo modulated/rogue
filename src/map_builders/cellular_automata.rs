@@ -1,4 +1,4 @@
-use super::{MapBuilder, Map, TileType, Position, spawner, SHOW_MAPGEN_VISUALIZER, generate_voronoi_spawn_regions, remove_unreachable_areas_returning_most_distant};
+use super::{MapBuilder, Map, TileType, Position, super::spawner::spawn_region, SHOW_MAPGEN_VISUALIZER, generate_voronoi_spawn_regions, remove_unreachable_areas_returning_most_distant};
 use rltk::RandomNumberGenerator;
 use std::collections::HashMap;
 
@@ -119,7 +119,7 @@ impl CellularAutomataBuilder {
 		self.noise_areas = generate_voronoi_spawn_regions(&self.map, &mut rng);
 
 		for area in self.noise_areas.iter() {
-			spawner::spawn_region(&self.map, &mut rng, area.1, self.depth, &mut self.spawn_list);
+			spawn_region(&self.map, &mut rng, area.1, self.depth, &mut self.spawn_list);
 		}
 	}
 }

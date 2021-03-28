@@ -1,4 +1,4 @@
-use super::{MapBuilder, Map, TileType, Position, spawner, SHOW_MAPGEN_VISUALIZER, remove_unreachable_areas_returning_most_distant, generate_voronoi_spawn_regions};
+use super::{MapBuilder, Map, TileType, Position, super::spawner, SHOW_MAPGEN_VISUALIZER, remove_unreachable_areas_returning_most_distant, generate_voronoi_spawn_regions};
 use std::collections::HashMap;
 
 pub struct VoronoiBuilder {
