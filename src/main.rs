@@ -39,6 +39,8 @@ mod inventory_system;
 pub use inventory_system::{InventorySystem, ItemUseSystem, ItemDropSystem, ItemRemoveSystem};
 mod trigger_system;
 pub use trigger_system::TriggerSystem;
+mod particle_system;
+pub use particle_system::{cull_dead_particles, ParticleBuilder};
 
 const SHOW_MAPGEN_VISUALIZER: bool = true;
 
@@ -91,6 +93,8 @@ impl State {
 		drop_items.run_now(&self.ecs);
 		let mut remove_items = ItemRemoveSystem{};
 		remove_items.run_now(&self.ecs);
+		let mut particles = particle_system::ParticleSpawnSystem{};
+		particles.run_now(&self.ecs);
 		
 		self.ecs.maintain();
 	}
@@ -223,6 +227,7 @@ impl GameState for State {
 		}
 
 		ctx.cls();
+		particle_system::cull_dead_particles(&mut self.ecs, ctx);
 
 		match newrunstate {
 			RunState::MainMenu{..} => {}
@@ -437,6 +442,7 @@ fn main() -> rltk::BError {
 	gs.ecs.insert(RunState::MapGeneration);
 	gs.ecs.insert(gamelog::GameLog{ entries: vec!["Welcome to Rogue.".to_string()]});
 	gs.ecs.insert(rex_assets::RexAssets::new());
+	gs.ecs.insert(particle_system::ParticleBuilder::new());
 	gs.generate_world_map(1);
 
 

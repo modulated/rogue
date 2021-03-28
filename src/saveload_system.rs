@@ -50,7 +50,7 @@ pub fn save_game(ecs: &mut World) {
 		serialize_individually!(ecs, serializer, data, Position, Renderable, Player, Viewshed, Monster, Name, BlocksTile, CombatStats, SufferDamage, 
 			WantsToMelee, Item, Consumable, Ranged, InflictsDamage, AreaOfEffect, Confusion, ProvidesHealing, InBackpack, WantsToPickupItem, 
 			WantsToUseItem, WantsToDropItem, SerializationHelper, Equippable, Equipped, MeleePowerBonus, DefenseBonus, WantsToRemoveItem, MagicMapper, 
-			EntityMoved, EntryTrigger, Hidden, SingleActivation
+			EntityMoved, EntryTrigger, Hidden, SingleActivation, ParticleLifetime
 		);
 
 	}
@@ -81,7 +81,7 @@ pub fn load_game(ecs: &mut World) {
 			Name, BlocksTile, CombatStats, SufferDamage, WantsToMelee, Item, Consumable, Ranged, InflictsDamage, 
 			AreaOfEffect, Confusion, ProvidesHealing, InBackpack, WantsToPickupItem, WantsToUseItem,
 			WantsToDropItem, SerializationHelper, Equippable, Equipped, MeleePowerBonus, DefenseBonus, WantsToRemoveItem, 
-			MagicMapper, EntityMoved, EntryTrigger, Hidden, SingleActivation
+			MagicMapper, EntityMoved, EntryTrigger, Hidden, SingleActivation, ParticleLifetime
 		);
 	}
 

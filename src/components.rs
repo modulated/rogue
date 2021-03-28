@@ -6,6 +6,10 @@ use super::map::Map;
 use rltk::{RGB};
 
 pub fn register(ecs: &mut World) {
+	// Ser/Deser
+	ecs.register::<SimpleMarker<SerializeMe>>();
+	ecs.register::<SerializationHelper>();
+	// Game Components
 	ecs.register::<Position>();
 	ecs.register::<Renderable>();
 	ecs.register::<Player>();
@@ -38,10 +42,23 @@ pub fn register(ecs: &mut World) {
 	ecs.register::<EntryTrigger>();
 	ecs.register::<EntityMoved>();
 	ecs.register::<SingleActivation>();
-	// Ser/Deser
-	ecs.register::<SimpleMarker<SerializeMe>>();
-	ecs.register::<SerializationHelper>();
+	ecs.register::<ParticleLifetime>();
+
 }
+
+// ********************************************************************************
+// Serialization Components
+// ********************************************************************************
+pub struct SerializeMe;
+
+#[derive(Component, Serialize, Deserialize, Clone)]
+pub struct SerializationHelper {
+	pub map : Map
+}
+
+// ********************************************************************************
+// Game Components
+// ********************************************************************************
 
 #[derive(Component, ConvertSaveload, Clone, Copy)]
 pub struct Position {
@@ -209,12 +226,10 @@ pub struct EntityMoved {}
 #[derive(Component, Serialize, Deserialize, Clone)]
 pub struct SingleActivation {}
 
-
-// Serialization Helper Code
-pub struct SerializeMe;
-
-#[derive(Component, Serialize, Deserialize, Clone)]
-pub struct SerializationHelper {
-	pub map : Map
+#[derive(Component,Serialize, Deserialize, Clone)]
+pub struct ParticleLifetime {
+	pub lifetime_ms: f32
 }
+
+
 
