@@ -151,37 +151,29 @@ pub trait MetaMapBuilder {
 	fn build_map(&mut self, rng: &mut rltk::RandomNumberGenerator, build_data: &mut BuilderMap);
 }
 
+#[allow(unused_variables)]
 pub fn random_builder(new_depth: i32, rng: &mut rltk::RandomNumberGenerator) -> BuilderChain {
-	// let mut builder = BuilderChain::new(new_depth);
-	// let type_roll = rng.roll_dice(1, 2);
-	// match type_roll {
-	// 	1 => random_room_builder(rng, &mut builder),
-	// 	_ => random_shape_builder(rng, &mut builder)
-	// }
-
-	// if rng.roll_dice(1, 3)==1 {
-	// 	builder.with(WFCBuilder::new());
-	// }
-
-	// if rng.roll_dice(1, 20)==1 {
-	// 	builder.with(PrefabBuilder::sectional(prefab_builder::prefab_sections::UNDERGROUND_FORT));
-	// }
-
-	// builder.with(PrefabBuilder::vaults());
-
-	// builder
-
 	let mut builder = BuilderChain::new(new_depth);
-    builder.start_with(SimpleMapBuilder::new());
-    builder.with(RoomDrawer::new());
-    builder.with(RoomSorter::new(RoomSort::LeftMost));
-    builder.with(BspCorridors::new());
-    builder.with(RoomBasedSpawner::new());
-    builder.with(RoomBasedStairs::new());
-    builder.with(RoomBasedStartingPosition::new());
-    builder
+	let type_roll = rng.roll_dice(1, 2);
+	match type_roll {
+		1 => random_room_builder(rng, &mut builder),
+		_ => random_shape_builder(rng, &mut builder)
+	}
+
+	if rng.roll_dice(1, 3)==1 {
+		builder.with(WFCBuilder::new());
+	}
+
+	if rng.roll_dice(1, 20)==1 {
+		builder.with(PrefabBuilder::sectional(prefab_builder::prefab_sections::UNDERGROUND_FORT));
+	}
+
+	builder.with(PrefabBuilder::vaults());
+
+	builder
 }
 
+#[allow(dead_code)]
 fn random_start_position(rng: &mut rltk::RandomNumberGenerator) -> (XStart, YStart) {
     let x;
     let xroll = rng.roll_dice(1, 3);
@@ -202,6 +194,7 @@ fn random_start_position(rng: &mut rltk::RandomNumberGenerator) -> (XStart, YSta
     (x, y)
 }
 
+#[allow(dead_code)]
 fn random_room_builder(rng: &mut rltk::RandomNumberGenerator, builder : &mut BuilderChain) {
 	let build_roll = rng.roll_dice(1, 3);
 	match build_roll {
@@ -221,6 +214,8 @@ fn random_room_builder(rng: &mut rltk::RandomNumberGenerator, builder : &mut Bui
 			4 => builder.with(RoomSorter::new(RoomSort::BottomMost)),
 			_ => builder.with(RoomSorter::new(RoomSort::Central)),
 		}
+
+		builder.with(RoomDrawer::new());
 
 		let corridor_roll = rng.roll_dice(1, 2);
 		match corridor_roll {
@@ -258,6 +253,7 @@ fn random_room_builder(rng: &mut rltk::RandomNumberGenerator, builder : &mut Bui
 	}
 }
 
+#[allow(dead_code)]
 fn random_shape_builder(rng: &mut rltk::RandomNumberGenerator, builder : &mut BuilderChain) {
 	let builder_roll = rng.roll_dice(1, 16);
 	match builder_roll {
