@@ -1,6 +1,7 @@
 use rltk::{ RGB, Rltk, BaseMap, Algorithm2D, Point };
 use specs::prelude::*;
 use serde::{Serialize, Deserialize};
+use std::collections::HashSet;
 
 pub const MAPWIDTH : usize = 80;
 pub const MAPHEIGHT : usize = 43;
@@ -20,6 +21,7 @@ pub struct Map {
 	pub visible_tiles : Vec<bool>,
 	pub blocked : Vec<bool>,
 	pub depth: i32,
+	pub view_blocked: HashSet<usize>,
 
 	#[serde(skip_serializing)]
 	#[serde(skip_deserializing)]
@@ -36,12 +38,17 @@ impl Map {
 			visible_tiles : vec![false; MAPCOUNT],
 			blocked : vec![false; MAPCOUNT],
 			depth: new_depth,
-			tile_content : vec![Vec::new(); MAPCOUNT]			
+			view_blocked: HashSet::new(),
+			tile_content : vec![Vec::new(); MAPCOUNT]
 		}
 	}
 
 	pub fn xy_idx(&self, x: i32, y: i32) -> usize {
 		(y as usize * self.width as usize) + x as usize
+	}
+
+	pub fn idx_xy(&self, idx: usize) -> (i32, i32) {
+		(idx as i32 % self.width, idx as i32 / self.width)
 	}
 
 
@@ -65,8 +72,8 @@ impl Map {
 }
 
 impl BaseMap for Map {
-	fn is_opaque(&self, idx:usize) -> bool {
-		self.tiles[idx] == TileType::Wall
+	fn is_opaque(&self, idx:usize) -> bool {		
+		self.tiles[idx] == TileType::Wall || self.view_blocked.contains(&idx)
 	}
 
 	fn get_pathing_distance(&self, idx1:usize, idx2:usize) -> f32 {

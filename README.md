@@ -8,3 +8,4 @@ Roguelike written in rust.
 - [ ] Map builder chaining
 - [ ] Main menu crash
 - [ ] Start positioning
+- [ ] Non-straight corridors too narrow

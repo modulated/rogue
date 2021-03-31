@@ -43,6 +43,8 @@ pub fn register(ecs: &mut World) {
 	ecs.register::<EntityMoved>();
 	ecs.register::<SingleActivation>();
 	ecs.register::<ParticleLifetime>();
+	ecs.register::<BlocksVisibility>();
+	ecs.register::<Door>();
 
 }
 
@@ -94,6 +96,14 @@ pub struct Name {
 
 #[derive(Component, Debug, Clone, Copy, Serialize, Deserialize)]
 pub struct BlocksTile {}
+
+#[derive(Component, Debug, Clone, Copy, Serialize, Deserialize)]
+pub struct BlocksVisibility {}
+
+#[derive(Component, Debug, Clone, Copy, Serialize, Deserialize)]
+pub struct Door {
+	pub open: bool
+}
 
 #[derive(Component, Debug, ConvertSaveload)]
 pub struct CombatStats {

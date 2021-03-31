@@ -1,12 +1,10 @@
 use rltk::{ RGB, RandomNumberGenerator };
 use specs::{prelude::*, saveload::MarkedBuilder, saveload::SimpleMarker};
 use std::collections::HashMap;
-
-use crate::{DefenseBonus, EntryTrigger, EquipmentSlot, Equippable, MagicMapper, MeleePowerBonus, SingleActivation};
-
 use super::{CombatStats, Player, Renderable, Name, Position, Viewshed, Monster, BlocksTile, 
 	MAPWIDTH, Rect, Consumable, ProvidesHealing, Item, Ranged, InflictsDamage, AreaOfEffect, 
-	Confusion, SerializeMe, RandomTable, Hidden, Map, TileType};
+	Confusion, SerializeMe, RandomTable, Hidden, Map, TileType, DefenseBonus, EntryTrigger, 
+	EquipmentSlot, Equippable, MagicMapper, MeleePowerBonus, SingleActivation, Door, BlocksVisibility};
 
 const MAX_MONSTERS: i32 = 4;
 
@@ -85,8 +83,26 @@ pub fn spawn_entity(ecs: &mut World, spawn: &(&usize, &String)) {
 		"Longsword" => longsword(ecs, x, y),
 		"Bear Trap" => bear_trap(ecs, x, y),
 		"Incendiary Mine" => incendiary_mine(ecs, x, y),
+		"Door" => door(ecs, x, y),
 		_ => {}
 	}
+}
+
+fn door(ecs: &mut World, x: i32, y: i32) {
+	ecs.create_entity()
+		.with(Position{ x, y })
+		.with(Renderable{
+			glyph: rltk::to_cp437('+'),
+			fg: RGB::named(rltk::CHOCOLATE),
+			bg: RGB::named(rltk::BLACK),
+			render_order: 2
+		})
+		.with(Name{ name: "Door".to_string() })
+		.with(BlocksTile{})
+		.with(BlocksVisibility{})
+		.with(Door{open: false})
+		.marked::<SimpleMarker<SerializeMe>>()
+		.build();
 }
 
 fn orc(ecs: &mut World, x: i32, y: i32) { monster(ecs, x, y, rltk::to_cp437('o'), "Orc"); }

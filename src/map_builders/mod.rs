@@ -80,6 +80,12 @@ use room_corridor_straight::StraightCorridors;
 mod room_corridor_spawner;
 #[allow(unused_imports)]
 use room_corridor_spawner::CorridorSpawner;
+mod door_builder;
+#[allow(unused_imports)]
+use door_builder::DoorBuilder;
+mod edge_wall_builder;
+#[allow(unused_imports)]
+use edge_wall_builder::EdgeWallBuilder;
 
 pub struct BuilderMap {
 	pub spawn_list: Vec<(usize, String)>,
@@ -175,12 +181,20 @@ pub fn random_builder(new_depth: i32, rng: &mut rltk::RandomNumberGenerator) -> 
 
 	if rng.roll_dice(1, 3)==1 {
 		builder.with(WFCBuilder::new());
+		builder.with(EdgeWallBuilder::new());
+		let (start_x, start_y) = random_start_position(rng);
+		builder.with(AreaStartingPosition::new(start_x, start_y));
+
+		builder.with(VoronoiSpawning::new());
+		builder.with(DistantExit::new());
+		
 	}
 
 	if rng.roll_dice(1, 20)==1 {
 		builder.with(PrefabBuilder::sectional(prefab_builder::prefab_sections::UNDERGROUND_FORT));
 	}
 
+	builder.with(DoorBuilder::new());
 	builder.with(PrefabBuilder::vaults());
 
 	builder
