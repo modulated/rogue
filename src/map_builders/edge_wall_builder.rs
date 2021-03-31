@@ -20,13 +20,13 @@ impl EdgeWallBuilder {
 		let height: usize = build_data.map.height as usize;
 
 		for x in 0..width {
-			build_data.map.tiles[x] = TileType::Floor;
-			build_data.map.tiles[x + ((height - 1) * width)] = TileType::Floor;
+			build_data.map.tiles[x] = TileType::Wall;
+			build_data.map.tiles[x + ((height - 1) * width)] = TileType::Wall;
 		}
 
 		for y in 0..height {
-			build_data.map.tiles[y] = TileType::Floor;
-			build_data.map.tiles[y + ((width - 1) * height)] = TileType::Floor;
+			build_data.map.tiles[y] = TileType::Wall;
+			build_data.map.tiles[y + ((width - 1) * height)] = TileType::Wall;
 		}
 
 		build_data.take_snapshot();
