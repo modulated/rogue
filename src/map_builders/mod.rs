@@ -68,8 +68,15 @@ use room_corridor_bsp::BspCorridors;
 mod room_sorter;
 #[allow(unused_imports)]
 use room_sorter::{RoomSorter, RoomSort};
+#[allow(unused_imports)]
 mod room_draw;
 use room_draw::RoomDrawer;
+mod room_corridor_nearest;
+#[allow(unused_imports)]
+use room_corridor_nearest::NearestCorridors;
+mod room_corridor_straight;
+#[allow(unused_imports)]
+use room_corridor_straight::StraightCorridors;
 
 pub struct BuilderMap {
 	pub spawn_list: Vec<(usize, String)>,
@@ -153,23 +160,33 @@ pub trait MetaMapBuilder {
 
 #[allow(unused_variables)]
 pub fn random_builder(new_depth: i32, rng: &mut rltk::RandomNumberGenerator) -> BuilderChain {
+	// let mut builder = BuilderChain::new(new_depth);
+	// let type_roll = rng.roll_dice(1, 2);
+	// match type_roll {
+	// 	1 => random_room_builder(rng, &mut builder),
+	// 	_ => random_shape_builder(rng, &mut builder)
+	// }
+
+	// if rng.roll_dice(1, 3)==1 {
+	// 	builder.with(WFCBuilder::new());
+	// }
+
+	// if rng.roll_dice(1, 20)==1 {
+	// 	builder.with(PrefabBuilder::sectional(prefab_builder::prefab_sections::UNDERGROUND_FORT));
+	// }
+
+	// builder.with(PrefabBuilder::vaults());
+
+	// builder
+
 	let mut builder = BuilderChain::new(new_depth);
-	let type_roll = rng.roll_dice(1, 2);
-	match type_roll {
-		1 => random_room_builder(rng, &mut builder),
-		_ => random_shape_builder(rng, &mut builder)
-	}
-
-	if rng.roll_dice(1, 3)==1 {
-		builder.with(WFCBuilder::new());
-	}
-
-	if rng.roll_dice(1, 20)==1 {
-		builder.with(PrefabBuilder::sectional(prefab_builder::prefab_sections::UNDERGROUND_FORT));
-	}
-
-	builder.with(PrefabBuilder::vaults());
-
+	builder.start_with(SimpleMapBuilder::new());
+	builder.with(RoomDrawer::new());
+	builder.with(RoomSorter::new(RoomSort::LeftMost));
+	builder.with(StraightCorridors::new());
+	builder.with(RoomBasedSpawner::new());
+	builder.with(RoomBasedStairs::new());
+	builder.with(RoomBasedStartingPosition::new());
 	builder
 }
 
