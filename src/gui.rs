@@ -1,4 +1,4 @@
-use rltk:: {RGB, Rltk, Point, VirtualKeyCode };
+use rltk:: {RGB, Rltk, Point, VirtualKeyCode};
 use specs::prelude::*;
 use crate::saveload_system::{does_save_exist};
 
@@ -302,6 +302,13 @@ pub fn ranged_target(gs: &mut State, ctx: &mut Rltk, range: i32) -> (ItemMenuRes
 		return (ItemMenuResult::Cancel, None);
 	}
 
+	// Escape out
+	if let Some(key) = ctx.key {
+		if key == VirtualKeyCode::Escape {
+			return (ItemMenuResult::Cancel, None);
+		}
+	}
+
 	// Draw mouse cursor
 	let mouse_pos = ctx.mouse_pos();
 	let mut mouse_map_pos = mouse_pos;
@@ -317,7 +324,7 @@ pub fn ranged_target(gs: &mut State, ctx: &mut Rltk, range: i32) -> (ItemMenuRes
 	if valid_target {
 		ctx.set_bg(mouse_pos.0, mouse_pos.1, RGB::named(rltk::CYAN));
 		if ctx.left_click {
-			return (ItemMenuResult::Selected, Some(Point::new(mouse_pos.0, mouse_pos.1)));
+			return (ItemMenuResult::Selected, Some(Point::new(mouse_map_pos.0, mouse_map_pos.1)));
 		}
 	} else {
 		ctx.set_bg(mouse_pos.0, mouse_pos.1, RGB::named(rltk::RED));
