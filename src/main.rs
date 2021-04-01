@@ -20,9 +20,11 @@ pub use spawner::*;
 mod random_table;
 pub use random_table::RandomTable;
 mod saveload_system;
-pub use saveload_system::{save_game};
+pub use saveload_system::save_game;
 pub mod map_builders;
 pub mod rex_assets;
+pub mod camera;
+pub use camera::{render_camera, get_screen_bounds};
 
 // Systems
 mod visibility_system;
@@ -229,27 +231,13 @@ impl GameState for State {
 		ctx.cls();
 		particle_system::cull_dead_particles(&mut self.ecs, ctx);
 
+		// Render loop if in game
 		match newrunstate {
 			RunState::MainMenu{..} => {}
+			RunState::GameOver{..} => {}
 			_ => {
-				draw_map(&self.ecs.fetch::<Map>(), ctx);
-		
-				{
-					let positions = self.ecs.read_storage::<Position>();
-					let renderables = self.ecs.read_storage::<Renderable>();
-					let hidden = self.ecs.read_storage::<Hidden>();
-					let map = self.ecs.fetch::<Map>();
-					
-					let mut data = (&positions, &renderables, !&hidden).join().collect::<Vec<_>>();
-					data.sort_by(|&a, &b| b.1.render_order.cmp(&a.1.render_order));
-			
-					for (pos, render, _hidden) in data.iter() {
-						let idx = map.xy_idx(pos.x, pos.y);
-						if map.visible_tiles[idx] { ctx.set(pos.x, pos.y, render.fg, render.bg, render.glyph) }
-					}
-			
-					draw_ui(&self.ecs, ctx);
-				}		
+				render_camera(&self.ecs, ctx);
+				draw_ui(&self.ecs, ctx);						
 			}
 		}
 
@@ -260,7 +248,9 @@ impl GameState for State {
 					newrunstate = self.mapgen_next_state.unwrap();
 				}
 				ctx.cls();
-				draw_map(&self.mapgen_history[self.mapgen_index], ctx);
+				if self.mapgen_index < self.mapgen_history.len() {
+					// render_debug_map(&self.mapgen_history[self.mapgen_index], ctx);
+				}
 
 				let frametime: f32 = 5000.0/(self.mapgen_history.len() as f32);
 				self.mapgen_timer += ctx.frame_time_ms;
