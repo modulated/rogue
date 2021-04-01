@@ -25,8 +25,8 @@ impl EdgeWallBuilder {
 		}
 
 		for y in 0..height {
-			build_data.map.tiles[y] = TileType::Wall;
-			build_data.map.tiles[y + ((width - 1) * height)] = TileType::Wall;
+			build_data.map.tiles[(width * y)] = TileType::Wall;
+			build_data.map.tiles[width * (y + 1) - 1] = TileType::Wall;
 		}
 
 		build_data.take_snapshot();

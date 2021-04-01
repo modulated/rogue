@@ -195,7 +195,7 @@ pub fn random_builder(new_depth: i32, rng: &mut rltk::RandomNumberGenerator) -> 
 	}
 
 	builder.with(DoorBuilder::new());
-	builder.with(PrefabBuilder::vaults());
+	builder.with(PrefabBuilder::vaults());	
 
 	builder
 }
