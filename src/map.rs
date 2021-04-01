@@ -1,11 +1,7 @@
-use rltk::{ BaseMap, Algorithm2D, Point };
+use rltk::{ BaseMap, Algorithm2D, Point, RGB };
 use specs::prelude::*;
 use serde::{Serialize, Deserialize};
 use std::collections::HashSet;
-
-pub const MAPWIDTH : usize = 80;
-pub const MAPHEIGHT : usize = 43;
-pub const MAPCOUNT : usize = MAPHEIGHT * MAPWIDTH;
 
 #[derive(PartialEq, Copy, Clone, Serialize, Deserialize, Hash, Eq)]
 pub enum TileType {
@@ -29,17 +25,18 @@ pub struct Map {
 }
 
 impl Map {
-	pub fn new(new_depth: i32) -> Map {
+	pub fn new(new_depth: i32, width: i32, height: i32) -> Map {
+		let map_tile_count = (width * height) as usize;
 		Map {
-			tiles : vec![TileType::Wall; MAPCOUNT],
-			width : MAPWIDTH as i32,
-			height: MAPHEIGHT as i32,
-			revealed_tiles : vec![false; MAPCOUNT],
-			visible_tiles : vec![false; MAPCOUNT],
-			blocked : vec![false; MAPCOUNT],
+			tiles : vec![TileType::Wall; map_tile_count],
+			width, 
+			height,
+			revealed_tiles : vec![false; map_tile_count],
+			visible_tiles : vec![false; map_tile_count],
+			blocked : vec![false; map_tile_count],
 			depth: new_depth,
 			view_blocked: HashSet::new(),
-			tile_content : vec![Vec::new(); MAPCOUNT]
+			tile_content : vec![Vec::new(); map_tile_count]
 		}
 	}
 
@@ -111,37 +108,37 @@ impl Algorithm2D for Map {
 	}
 }
 
-// pub fn draw_map(map: &Map, ctx : &mut Rltk) {
-// 	let mut y = 0;
-// 	let mut x = 0;
-// 	for (idx,tile) in map.tiles.iter().enumerate() {
-// 		// Render a tile depending upon the tile type
+pub fn draw_map(map: &Map, ctx : &mut Rltk) {
+	let mut y = 0;
+	let mut x = 0;
+	for (idx,tile) in map.tiles.iter().enumerate() {
+		// Render a tile depending upon the tile type
 
-// 		if map.revealed_tiles[idx] {
-// 			let glyph;
-// 			let mut fg;
-// 			match tile {
-// 				TileType::Floor => {
-// 					glyph = rltk::to_cp437('.');
-// 					fg = RGB::from_f32(0.0, 0.5, 0.5);
-// 				}
-// 				TileType::Wall => {
-// 					glyph = wall_glyph(&*map, x, y);
-// 					fg = RGB::from_f32(0., 1.0, 0.);
-// 				}
-// 				TileType::DownStairs => {
-// 					glyph = rltk::to_cp437('>');
-// 					fg = RGB::from_f32(0.0, 1.0, 1.0);                }
-// 			}
-// 			if !map.visible_tiles[idx] { fg = fg.to_greyscale() }
-// 			ctx.set(x, y, fg, RGB::from_f32(0., 0., 0.), glyph);
-// 		}
+		if map.revealed_tiles[idx] {
+			let glyph;
+			let mut fg;
+			match tile {
+				TileType::Floor => {
+					glyph = rltk::to_cp437('.');
+					fg = RGB::from_f32(0.0, 0.5, 0.5);
+				}
+				TileType::Wall => {
+					glyph = wall_glyph(&*map, x, y);
+					fg = RGB::from_f32(0., 1.0, 0.);
+				}
+				TileType::DownStairs => {
+					glyph = rltk::to_cp437('>');
+					fg = RGB::from_f32(0.0, 1.0, 1.0);                }
+			}
+			if !map.visible_tiles[idx] { fg = fg.to_greyscale() }
+			ctx.set(x, y, fg, RGB::from_f32(0., 0., 0.), glyph);
+		}
 
-// 		// Move the coordinates
-// 		x += 1;
-// 		if x > MAPWIDTH as i32-1 {
-// 			x = 0;
-// 			y += 1;
-// 		}
-// 	}
-// }
+		// Move the coordinates
+		x += 1;
+		if x > (map.width * map.height) - 1 {
+			x = 0;
+			y += 1;
+		}
+	}
+}

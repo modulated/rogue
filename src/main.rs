@@ -386,11 +386,11 @@ impl GameState for State {
 
 			RunState::MagicMapReveal{row} => {
 				let mut map = self.ecs.fetch_mut::<Map>();
-				for x in 0..MAPWIDTH {
+				for x in 0..map.width {
 					let idx = map.xy_idx(x as i32, row);
 					map.revealed_tiles[idx] = true;
 				}
-				if row as usize == MAPHEIGHT - 1 {
+				if row == map.height - 1 {
 					newrunstate = RunState::MonsterTurn;
 				} else {
 					newrunstate = RunState::MagicMapReveal{ row: row + 1 };
