@@ -24,7 +24,7 @@ pub use saveload_system::save_game;
 pub mod map_builders;
 pub mod rex_assets;
 pub mod camera;
-pub use camera::{render_camera, get_screen_bounds};
+pub use camera::{render_camera, get_screen_bounds, render_debug_map};
 
 // Systems
 mod visibility_system;
@@ -106,7 +106,7 @@ impl State {
 		self.mapgen_timer = 0.0;
 		self.mapgen_history.clear();
 		let mut rng = self.ecs.write_resource::<RNG>();
-		let mut builder = map_builders::random_builder(new_depth, &mut rng);
+		let mut builder = map_builders::random_builder(new_depth, &mut rng, 80, 50);
 		builder.build_map(&mut rng);
 		std::mem::drop(rng);
 		self.mapgen_history = builder.build_data.history.clone();
@@ -116,11 +116,8 @@ impl State {
 			*worldmap_resource = builder.build_data.map.clone();
 			player_start = builder.build_data.starting_position.as_mut().unwrap().clone();
 		}
-
-		// Spawn bad guys
+		
 		builder.spawn_entities(&mut self.ecs);
-
-		// Place the player and update resources
 		let (player_x, player_y) = (player_start.x, player_start.y);
 		let mut player_position = self.ecs.write_resource::<Point>();
 		*player_position = Point::new(player_x, player_y);
@@ -132,7 +129,6 @@ impl State {
 			player_pos_comp.y = player_y;
 		}
 
-		// Mark the player's visibility as dirty
 		let mut viewshed_components = self.ecs.write_storage::<Viewshed>();
 		let vs = viewshed_components.get_mut(*player_entity);
 		if let Some(vs) = vs {
@@ -249,7 +245,7 @@ impl GameState for State {
 				}
 				ctx.cls();
 				if self.mapgen_index < self.mapgen_history.len() {
-					// render_debug_map(&self.mapgen_history[self.mapgen_index], ctx);
+					render_debug_map(&self.mapgen_history[self.mapgen_index], ctx);
 				}
 
 				let frametime: f32 = 5000.0/(self.mapgen_history.len() as f32);
@@ -424,7 +420,7 @@ fn main() -> rltk::BError {
 
 	components::register(&mut gs.ecs);
 	gs.ecs.insert(SimpleMarkerAllocator::<SerializeMe>::new());
-	gs.ecs.insert(Map::new(1));
+	gs.ecs.insert(Map::new(1, 64, 64));
 	gs.ecs.insert(Point::new(0, 0));
 	gs.ecs.insert(RNG::new());
 	let player_entity = spawner::player(&mut gs.ecs, 0, 0);
