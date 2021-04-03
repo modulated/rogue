@@ -160,6 +160,10 @@ impl BuilderChain {
 	}
 
 	pub fn spawn_entities(&mut self, ecs: &mut World) {
+		if self.build_data.spawn_list.len() == 0 {
+			panic!("Cannot spawn without spawn list.");
+		}
+		
 		for entity in self.build_data.spawn_list.iter() {
 			spawn_entity(ecs, &(&entity.0, &entity.1));
 		}
@@ -183,9 +187,9 @@ pub fn random_builder(new_depth: i32, rng: &mut rltk::RandomNumberGenerator, wid
 		_ => random_shape_builder(rng, &mut builder)
 	}
 
-	if rng.roll_dice(1, 3)==1 {
+	if rng.roll_dice(1, 4) == 1 {
 		builder.with(WFCBuilder::new());
-		builder.with(EdgeWallBuilder::new());
+		// builder.with(EdgeWallBuilder::new());
 		let (start_x, start_y) = random_start_position(rng);
 		builder.with(AreaStartingPosition::new(start_x, start_y));
 

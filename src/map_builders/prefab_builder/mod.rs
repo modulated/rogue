@@ -99,10 +99,6 @@ impl PrefabBuilder {
 				build_data.map.tiles[idx] = TileType::Floor;
 				build_data.spawn_list.push((idx, "Bear Trap".to_string()));
 			}
-			'%' => {
-				build_data.map.tiles[idx] = TileType::Floor;
-				build_data.spawn_list.push((idx, "Rations".to_string()));
-			}
 			'!' => {
 				build_data.map.tiles[idx] = TileType::Floor;
 				build_data.spawn_list.push((idx, "Health Potion".to_string()));
