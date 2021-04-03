@@ -25,6 +25,7 @@ pub mod map_builders;
 pub mod rex_assets;
 pub mod camera;
 pub use camera::{render_camera, get_screen_bounds, render_debug_map};
+pub mod raws;
 
 // Systems
 mod visibility_system;
@@ -43,6 +44,9 @@ mod trigger_system;
 pub use trigger_system::TriggerSystem;
 mod particle_system;
 pub use particle_system::{cull_dead_particles, ParticleBuilder};
+
+#[macro_use]
+extern crate lazy_static;
 
 const SHOW_MAPGEN_VISUALIZER: bool = true;
 
@@ -420,6 +424,9 @@ fn main() -> rltk::BError {
 
 	components::register(&mut gs.ecs);
 	gs.ecs.insert(SimpleMarkerAllocator::<SerializeMe>::new());
+	
+	raws::load_raws();
+
 	gs.ecs.insert(Map::new(1, 64, 64));
 	gs.ecs.insert(Point::new(0, 0));
 	gs.ecs.insert(RNG::new());

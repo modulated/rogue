@@ -2,7 +2,7 @@ use specs::prelude::*;
 use super::{Map, TileType, Position, Renderable, Hidden};
 use rltk::{Point, Rltk, RGB, FontCharType};
 
-const SHOW_BOUNDS: bool = true;
+const SHOW_BOUNDS: bool = false;
 
 pub fn render_camera(ecs: &World, ctx: &mut Rltk) {
 	let map = ecs.fetch::<Map>();
