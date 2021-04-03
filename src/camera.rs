@@ -2,7 +2,7 @@ use specs::prelude::*;
 use super::{Map, TileType, Position, Renderable, Hidden};
 use rltk::{Point, Rltk, RGB, FontCharType};
 
-const SHOW_BOUNDS: bool = false;
+const SHOW_BOUNDS: bool = true;
 
 pub fn render_camera(ecs: &World, ctx: &mut Rltk) {
 	let map = ecs.fetch::<Map>();
@@ -21,7 +21,7 @@ pub fn render_camera(ecs: &World, ctx: &mut Rltk) {
 					ctx.set(x, y, fg, bg, glyph);
 				}
 			} else if SHOW_BOUNDS {
-				ctx.set(x, y, RGB::named(rltk::GREY), RGB::named(rltk::BLACK), rltk::to_cp437('.'));				
+				ctx.set(x, y, RGB::named(rltk::GREY), RGB::named(rltk::BLACK), rltk::to_cp437('#'));				
 			}
 			x += 1;
 		}
@@ -68,6 +68,10 @@ fn get_tile_glyph(idx: usize, map: &Map) -> (FontCharType, RGB, RGB) {
 	let mut bg = RGB::named(rltk::BLACK);
 
 	match map.tiles[idx] {
+		TileType::WoodFloor => {
+			glyph = rltk::to_cp437('.');
+			fg = RGB::named(rltk::CHOCOLATE);
+		},
 		TileType::Floor => {
 			glyph = rltk::to_cp437('.');
 			fg = RGB::from_f32(0.0, 0.5, 0.5);
@@ -77,11 +81,32 @@ fn get_tile_glyph(idx: usize, map: &Map) -> (FontCharType, RGB, RGB) {
 			let y = idx as i32 / map.width;
 			glyph = wall_glyph(&*map, x, y);
 			fg = RGB::from_f32(0.0, 1.0, 0.0);
-		}
+		},
 		TileType::DownStairs => {
 			glyph = rltk::to_cp437('>');
 			fg = RGB::from_f32(0.0, 1.0, 1.0);
+		},
+		TileType::Bridge => {
+			glyph = rltk::to_cp437('.');
+			fg = RGB::named(rltk::CHOCOLATE);
+		},
+		TileType::Road => {
+			glyph = rltk::to_cp437('~');
+			fg = RGB::named(rltk::GRAY);
+		},
+		TileType::Grass => {
+			glyph = rltk::to_cp437('"');
+			fg = RGB::named(rltk::GREEN);
+		},
+		TileType::ShallowWater => {
+			glyph = rltk::to_cp437('≈');
+			fg = RGB::named(rltk::CYAN);
+		},
+		TileType::DeepWater => {
+			glyph = rltk::to_cp437('≈');
+			fg = RGB::named(rltk::NAVY_BLUE);
 		}
+
 	}
 	if !map.visible_tiles[idx] {
 		fg = fg.to_greyscale();

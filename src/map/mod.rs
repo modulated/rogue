@@ -2,11 +2,9 @@ use rltk::{ BaseMap, Algorithm2D, Point };
 use specs::prelude::*;
 use serde::{Serialize, Deserialize};
 use std::collections::HashSet;
+mod tiletype;
+pub use tiletype::{TileType};
 
-#[derive(PartialEq, Copy, Clone, Serialize, Deserialize, Hash, Eq)]
-pub enum TileType {
-	Wall, Floor, DownStairs
-}
 
 #[derive(Default, Serialize, Deserialize, Clone)]
 pub struct Map {
@@ -57,7 +55,7 @@ impl Map {
 
 	pub fn populate_blocked(&mut self) {
 		for (i,tile) in self.tiles.iter_mut().enumerate() {
-			self.blocked[i] = *tile == TileType::Wall;
+			self.blocked[i] = !tile.is_walkable();
 		}
 	}
 
@@ -69,8 +67,34 @@ impl Map {
 }
 
 impl BaseMap for Map {
-	fn is_opaque(&self, idx:usize) -> bool {		
-		self.tiles[idx] == TileType::Wall || self.view_blocked.contains(&idx)
+	fn is_opaque(&self, idx:usize) -> bool {
+		
+		if idx > 0 && idx < self.tiles.len() {
+			return self.tiles[idx].is_opaque() || self.view_blocked.contains(&idx);
+		}
+		true
+	}
+
+	fn get_available_exits(&self, idx: usize) -> rltk::SmallVec<[(usize, f32); 10]> {
+		let mut exits = rltk::SmallVec::new();
+		let x = idx as i32 % self.width;
+		let y = idx as i32 / self.width;
+		let w = self.width as usize;
+		let tt = self.tiles[idx as usize];
+
+		// Cardinal directions
+		if self.is_exit_valid(x-1, y) { exits.push((idx - 1, tt.move_cost())) };
+		if self.is_exit_valid(x+1, y) { exits.push((idx + 1, tt.move_cost())) };
+		if self.is_exit_valid(x, y-1) { exits.push((idx - w, tt.move_cost())) };
+		if self.is_exit_valid(x, y+1) { exits.push((idx + w, tt.move_cost())) };
+
+		// Diagonals
+		if self.is_exit_valid(x-1, y-1) { exits.push(((idx-w) - 1, tt.move_cost() * 1.45)); }
+		if self.is_exit_valid(x+1, y-1) { exits.push(((idx-w) + 1, tt.move_cost() * 1.45)); }
+		if self.is_exit_valid(x-1, y+1) { exits.push(((idx+w) - 1, tt.move_cost() * 1.45)); }
+		if self.is_exit_valid(x+1, y+1) { exits.push(((idx+w) + 1, tt.move_cost() * 1.45)); }
+
+		exits
 	}
 
 	fn get_pathing_distance(&self, idx1:usize, idx2:usize) -> f32 {
@@ -78,27 +102,6 @@ impl BaseMap for Map {
 		let p1 = Point::new(idx1 % w, idx1 / w);
 		let p2 = Point::new(idx2 % w, idx2 / w);
 		rltk::DistanceAlg::Pythagoras.distance2d(p1, p2)
-	}
-
-	fn get_available_exits(&self, idx:usize) -> rltk::SmallVec<[(usize, f32); 10]> {
-		let mut exits = rltk::SmallVec::new();
-		let x = idx as i32 % self.width;
-		let y = idx as i32 / self.width;
-		let w = self.width as usize;
-
-		// Cardinal directions
-		if self.is_exit_valid(x-1, y) { exits.push((idx-1, 1.0)) };
-		if self.is_exit_valid(x+1, y) { exits.push((idx+1, 1.0)) };
-		if self.is_exit_valid(x, y-1) { exits.push((idx-w, 1.0)) };
-		if self.is_exit_valid(x, y+1) { exits.push((idx+w, 1.0)) };
-
-		// Diagonals
-		if self.is_exit_valid(x-1, y-1) { exits.push(((idx-w)-1, 1.45)); }
-		if self.is_exit_valid(x+1, y-1) { exits.push(((idx-w)+1, 1.45)); }
-		if self.is_exit_valid(x-1, y+1) { exits.push(((idx+w)-1, 1.45)); }
-		if self.is_exit_valid(x+1, y+1) { exits.push(((idx+w)+1, 1.45)); }
-
-		exits
 	}
 }
 
