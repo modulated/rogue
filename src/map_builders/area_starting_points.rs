@@ -1,68 +1,81 @@
-use super::{MetaMapBuilder, BuilderMap, Position};
-use rltk::{RandomNumberGenerator as Rng, Point};
+use super::{BuilderMap, MetaMapBuilder, Position};
+use rltk::{Point, RandomNumberGenerator as Rng};
 
 #[allow(dead_code)]
-pub enum XStart { Left, Center, Right }
+pub enum XStart {
+    Left,
+    Center,
+    Right,
+}
 
 #[allow(dead_code)]
-pub enum YStart { Top, Center, Bottom }
+pub enum YStart {
+    Top,
+    Center,
+    Bottom,
+}
 
 pub struct AreaStartingPosition {
-	x: XStart,
-	y: YStart
+    x: XStart,
+    y: YStart,
 }
 
 impl MetaMapBuilder for AreaStartingPosition {
-	fn build_map(&mut self, rng: &mut Rng, build_data: &mut BuilderMap) {
-		self.build(rng, build_data);
-	}
+    fn build_map(&mut self, rng: &mut Rng, build_data: &mut BuilderMap) {
+        self.build(rng, build_data);
+    }
 }
 
 impl AreaStartingPosition {
-	#[allow(dead_code)]
-	pub fn new(x: XStart, y: YStart) -> Box<AreaStartingPosition> {
-		Box::new(AreaStartingPosition {
-			x, y
-		})
-	}
+    #[allow(dead_code)]
+    pub fn new(x: XStart, y: YStart) -> Box<AreaStartingPosition> {
+        Box::new(AreaStartingPosition { x, y })
+    }
 
-	fn build(&mut self, _rng: &mut Rng, build_data: &mut BuilderMap) {
-		let seed_x;
-		let seed_y;
+    fn build(&mut self, _rng: &mut Rng, build_data: &mut BuilderMap) {
+        let seed_x;
+        let seed_y;
 
-		match self.x {
-			XStart::Left => seed_x = 1,
-			XStart::Center => seed_x = build_data.map.width / 2,
-			XStart::Right => seed_x = build_data.map.width - 2,
-		}
+        match self.x {
+            XStart::Left => seed_x = 1,
+            XStart::Center => seed_x = build_data.map.width / 2,
+            XStart::Right => seed_x = build_data.map.width - 2,
+        }
 
-		match self.y {
-			YStart::Top => seed_y = 1,
-			YStart::Center => seed_y = build_data.map.height / 2,
-			YStart::Bottom => seed_y = build_data.map.height - 2,
-		}
+        match self.y {
+            YStart::Top => seed_y = 1,
+            YStart::Center => seed_y = build_data.map.height / 2,
+            YStart::Bottom => seed_y = build_data.map.height - 2,
+        }
 
-		let mut available_floors: Vec<(usize, f32)> = Vec::new();
-		for (idx, tiletype) in build_data.map.tiles.iter().enumerate() {
-			if tiletype.is_walkable() {
-				available_floors.push(
-					(idx, rltk::DistanceAlg::PythagorasSquared.distance2d(
-						Point::new(idx as i32 % build_data.map.width, idx as i32 / build_data.map.width),
-						Point::new(seed_x, seed_y)
-					))
-				);
-			}
-		}
+        let mut available_floors: Vec<(usize, f32)> = Vec::new();
+        for (idx, tiletype) in build_data.map.tiles.iter().enumerate() {
+            if tiletype.is_walkable() {
+                available_floors.push((
+                    idx,
+                    rltk::DistanceAlg::PythagorasSquared.distance2d(
+                        Point::new(
+                            idx as i32 % build_data.map.width,
+                            idx as i32 / build_data.map.width,
+                        ),
+                        Point::new(seed_x, seed_y),
+                    ),
+                ));
+            }
+        }
 
-		if available_floors.is_empty() {
-			panic!("No valid floors to start on.");
-		}
+        if available_floors.is_empty() {
+            panic!("No valid floors to start on.");
+        }
 
-		available_floors.sort_by(|a,b| a.1.partial_cmp(&b.1).unwrap());
+        available_floors.sort_by(|a, b| a.1.partial_cmp(&b.1).unwrap());
 
-		let start_x = available_floors[0].0 as i32 % build_data.map.width;
-		let start_y = available_floors[0].0 as i32 / build_data.map.width;
+        let start_x = available_floors[0].0 as i32 % build_data.map.width;
+        let start_y = available_floors[0].0 as i32 / build_data.map.width;
 
-		build_data.starting_position = Some(Position{ x: start_x, y : start_y });
-	}
+        build_data.starting_position = Some(Position {
+            x: start_x,
+            y: start_y,
+        });
+    }
 }
