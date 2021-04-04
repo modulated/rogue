@@ -69,7 +69,7 @@ fn get_tile_glyph(idx: usize, map: &Map) -> (FontCharType, RGB, RGB) {
 
 	match map.tiles[idx] {
 		TileType::WoodFloor => {
-			glyph = rltk::to_cp437('.');
+			glyph = rltk::to_cp437('░');
 			fg = RGB::named(rltk::CHOCOLATE);
 		},
 		TileType::Floor => {
@@ -87,11 +87,15 @@ fn get_tile_glyph(idx: usize, map: &Map) -> (FontCharType, RGB, RGB) {
 			fg = RGB::from_f32(0.0, 1.0, 1.0);
 		},
 		TileType::Bridge => {
-			glyph = rltk::to_cp437('.');
+			glyph = rltk::to_cp437(':');
 			fg = RGB::named(rltk::CHOCOLATE);
 		},
 		TileType::Road => {
-			glyph = rltk::to_cp437('~');
+			glyph = rltk::to_cp437('≡');
+			fg = RGB::named(rltk::GRAY);
+		},
+		TileType::Gravel => {
+			glyph = rltk::to_cp437(';');
 			fg = RGB::named(rltk::GRAY);
 		},
 		TileType::Grass => {

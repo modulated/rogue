@@ -1,4 +1,5 @@
- use super::{Map, Rect, TileType, Position, spawner::{spawn_entity, spawn_region}, SHOW_MAPGEN_VISUALIZER};
+use super::{Map, Rect, TileType, Position, spawner::{spawn_entity, spawn_region}, SHOW_MAPGEN_VISUALIZER};
+use rltk::RandomNumberGenerator as Rng;
 mod simple_map;
 #[allow(unused_imports)]
 use simple_map::SimpleMapBuilder;
@@ -86,6 +87,9 @@ use door_builder::DoorBuilder;
 mod edge_wall_builder;
 #[allow(unused_imports)]
 use edge_wall_builder::EdgeWallBuilder;
+mod town;
+#[allow(unused_imports)]
+use town::*;
 
 pub struct BuilderMap {
 	pub spawn_list: Vec<(usize, String)>,
@@ -146,7 +150,7 @@ impl BuilderChain {
 		self.builders.push(metabuilder);
 	}
 
-	pub fn build_map(&mut self, rng: &mut rltk::RandomNumberGenerator) {
+	pub fn build_map(&mut self, rng: &mut Rng) {
 		match &mut self.starter {
 			None => panic!("Cannot build without an initial starting builder."),
 			Some(starter) => {
@@ -171,15 +175,23 @@ impl BuilderChain {
 }
 
 pub trait InitialMapBuilder {
-	fn build_map(&mut self, rng: &mut rltk::RandomNumberGenerator, build_data: &mut BuilderMap);
+	fn build_map(&mut self, rng: &mut Rng, build_data: &mut BuilderMap);
 }
 
 pub trait MetaMapBuilder {
-	fn build_map(&mut self, rng: &mut rltk::RandomNumberGenerator, build_data: &mut BuilderMap);
+	fn build_map(&mut self, rng: &mut Rng, build_data: &mut BuilderMap);
+}
+
+pub fn level_builder(new_depth: i32, rng: &mut Rng, width: i32, height: i32) -> BuilderChain {
+	println!("Depth: {}", new_depth);
+	match new_depth {
+		1 => town_builder(new_depth, rng, width, height),
+		_ => random_builder(new_depth, rng, width, height)
+	}
 }
 
 #[allow(unused_variables)]
-pub fn random_builder(new_depth: i32, rng: &mut rltk::RandomNumberGenerator, width: i32, height: i32) -> BuilderChain {
+pub fn random_builder(new_depth: i32, rng: &mut Rng, width: i32, height: i32) -> BuilderChain {
 	let mut builder = BuilderChain::new(new_depth, width, height);
 	let type_roll = rng.roll_dice(1, 2);
 	match type_roll {
@@ -209,7 +221,7 @@ pub fn random_builder(new_depth: i32, rng: &mut rltk::RandomNumberGenerator, wid
 }
 
 #[allow(dead_code)]
-fn random_start_position(rng: &mut rltk::RandomNumberGenerator) -> (XStart, YStart) {
+fn random_start_position(rng: &mut Rng) -> (XStart, YStart) {
     let x;
     let xroll = rng.roll_dice(1, 3);
     match xroll {
@@ -230,7 +242,7 @@ fn random_start_position(rng: &mut rltk::RandomNumberGenerator) -> (XStart, YSta
 }
 
 #[allow(dead_code)]
-fn random_room_builder(rng: &mut rltk::RandomNumberGenerator, builder : &mut BuilderChain) {
+fn random_room_builder(rng: &mut Rng, builder : &mut BuilderChain) {
 	let build_roll = rng.roll_dice(1, 3);
 	match build_roll {
 		1 => builder.start_with(SimpleMapBuilder::new()),
@@ -294,7 +306,7 @@ fn random_room_builder(rng: &mut rltk::RandomNumberGenerator, builder : &mut Bui
 }
 
 #[allow(dead_code)]
-fn random_shape_builder(rng: &mut rltk::RandomNumberGenerator, builder : &mut BuilderChain) {
+fn random_shape_builder(rng: &mut Rng, builder : &mut BuilderChain) {
 	let builder_roll = rng.roll_dice(1, 16);
 	match builder_roll {
 		1 => builder.start_with(CellularAutomataBuilder::new()),

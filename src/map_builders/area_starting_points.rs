@@ -1,4 +1,4 @@
-use super::{MetaMapBuilder, BuilderMap, Position, TileType};
+use super::{MetaMapBuilder, BuilderMap, Position};
 use rltk::{RandomNumberGenerator as Rng, Point};
 
 #[allow(dead_code)]
@@ -44,7 +44,7 @@ impl AreaStartingPosition {
 
 		let mut available_floors: Vec<(usize, f32)> = Vec::new();
 		for (idx, tiletype) in build_data.map.tiles.iter().enumerate() {
-			if *tiletype == TileType::Floor {
+			if tiletype.is_walkable() {
 				available_floors.push(
 					(idx, rltk::DistanceAlg::PythagorasSquared.distance2d(
 						Point::new(idx as i32 % build_data.map.width, idx as i32 / build_data.map.width),

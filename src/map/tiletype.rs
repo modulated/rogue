@@ -6,6 +6,7 @@ pub enum TileType {
 	Floor, 
 	DownStairs,
 	Road,
+	Gravel,
 	Grass,
 	ShallowWater,
 	DeepWater,
@@ -16,7 +17,7 @@ pub enum TileType {
 impl TileType {
 	pub fn is_walkable(&self) -> bool {
 		match self {
-			TileType::Floor | TileType::DownStairs | TileType::Road | TileType::Grass | TileType::ShallowWater | TileType::WoodFloor | TileType::Bridge => true,
+			TileType::Floor | TileType::DownStairs | TileType::Road | TileType::Grass | TileType::ShallowWater | TileType::WoodFloor | TileType::Bridge | TileType::Gravel => true,
 			_ => false
 		}
 	}
